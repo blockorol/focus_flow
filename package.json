@@ -1,0 +1,33 @@
+{
+  "name": "focusflow-tooling",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "npm@10.9.2",
+  "engines": { "node": ">=22.14.0 <23", "npm": ">=10.9.2 <11" },
+  "scripts": {
+    "go": "node scripts/go.mjs",
+    "tools:build": "go version",
+    "contract:lint": "redocly lint contracts/openapi.yaml",
+    "generate:go": "node scripts/go.mjs tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml",
+    "generate:ts": "openapi-typescript contracts/openapi.yaml -o frontend/src/api/generated/schema.d.ts",
+    "generate": "npm run generate:go && npm run generate:ts",
+    "check:generated": "node scripts/check-generated.mjs",
+    "check:backend": "node scripts/check-backend.mjs",
+    "check:docker": "node scripts/check-docker.mjs",
+    "check:frontend": "npm --prefix frontend run lint && npm --prefix frontend run typecheck && npm --prefix frontend test -- --run && npm --prefix frontend run build",
+    "check:migrations": "node scripts/check-migrations.mjs",
+    "test:tooling": "node --test scripts/*.test.mjs",
+    "test:database": "node scripts/test-database.mjs",
+    "test:database:local": "node scripts/test-database-local.mjs",
+    "backend:up": "docker compose -f docker-compose.local.yml up --build -d",
+    "backend:down": "docker compose -f docker-compose.local.yml down",
+    "migrate:up": "docker compose -f docker-compose.local.yml run --rm --no-deps backend /app/bin/migrate up",
+    "migrate:status": "docker compose -f docker-compose.local.yml run --rm --no-deps backend /app/bin/migrate status",
+    "migrate:down": "docker compose -f docker-compose.local.yml run --rm --no-deps backend /app/bin/migrate down",
+    "hash-password": "docker compose -f docker-compose.local.yml run --rm -T --no-deps backend /app/bin/hash-password"
+  },
+  "devDependencies": {
+    "@redocly/cli": "2.51.2",
+    "openapi-typescript": "7.13.0"
+  }
+}

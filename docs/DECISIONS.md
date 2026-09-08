@@ -186,8 +186,8 @@ Backend issues a signed token; browser transport uses HttpOnly cookie.
 
 - frontend runs directly with Node.js;
 - backend runs in Docker;
-- no local PostgreSQL;
-- local backend connects to Railway PostgreSQL externally;
+- no PostgreSQL installation directly on the host;
+- local backend and PostgreSQL run in Docker Compose (clarification D-024 supersedes the initial remote-only assumption);
 - local CORS setup must work by default for `http://localhost:3000`.
 
 ---
@@ -229,3 +229,39 @@ The numbered implementation phases in project docs are Phase 0 through Phase 8.
 **Decision:** implement the general system before the job-search Specification.
 
 Do not add technologies or abstractions solely to look sophisticated.
+
+---
+
+## D-021 — Phase 0 approval
+
+**Decision:** The user approved `docs/exec-plans/phase-0-foundation.md` on 2026-09-05, including its recommended defaults. Track workflow instructions, status, and execution plans in Git. Keep the local bootstrap prompt ignored.
+
+Phase 0 uses npm, OpenAPI 3.0.3, oapi-codegen, openapi-typescript with openapi-fetch, and a public health-only bootstrap contract. Require a bounded database startup ping; defer authentication enforcement and application migrations to Phase 1. Remote development database details remain pending. This approval does not authorize production deployment or Phase 1.
+
+## D-022 — Repository language
+
+**Decision:** Communicate with the user in Russian. All created or modified repository content must be in English, including generated code, comments, documentation, configuration descriptions, and UI text.
+
+## D-023 — Disposable local test PostgreSQL
+
+**Decision:** On 2026-09-05 the user explicitly allowed local PostgreSQL in Docker for tests and delegated suitable default/version selection. Use PostgreSQL 17 in a separate `docker-compose.test.yml`, with disposable test-only credentials/data. Use the same PostgreSQL major in CI. The subsequent clarification D-024 also permits Docker PostgreSQL for normal development.
+
+## D-024 — Corrected local development topology
+
+**Decision:** On 2026-09-05 the user clarified that the original restriction concerned installing PostgreSQL directly on Windows, not running it in Docker. Local development is Node.js frontend plus backend and PostgreSQL in `docker-compose.local.yml`. Use the internal Compose hostname `postgres` and PostgreSQL 17. Development data uses a named Docker volume; test data remains separate and disposable. Railway PostgreSQL is for production; a remote Railway URL is not required to complete local Phase 0 verification. This supersedes all earlier remote-only local-development assumptions in the initial documents and plan. No application persistence model changes are implied.
+
+## D-025 — No repository certificate trust workaround
+
+**Decision:** Do not add project-level certificate replacement, local CA bundles, Docker build hooks for custom trusted roots, disabled TLS verification, or package-manager certificate overrides to solve dependency-download trust failures.
+
+On 2026-09-07, Phase 0 Docker diagnostics showed that the clean Go builder container receives a `proxy.golang.org` leaf certificate issued by `Avast Web/Mail Shield Root`. The failure comes from local HTTPS scanning/interception outside the repository. It must be handled as a developer machine/network configuration issue, not as application architecture or repository source.
+
+Standard operating-system CA packages inside runtime images remain allowed for ordinary HTTPS support.
+
+## D-026 — Native Go tooling and Compose runtime
+
+**Decision:** Use the host Go toolchain for Go development commands: module maintenance, code generation through `go tool`, formatting, vetting, tests, and local builds.
+
+The backend application still runs locally through `docker-compose.local.yml`, and production still builds from `backend/Dockerfile`. Docker Compose is the standard entry point for local backend/PostgreSQL runtime. Do not route normal Go commands through a Docker helper.
+
+Docker base images use explicit version tags such as `golang:1.26.8-bookworm`, not digest-pinned references, unless a later release/reproducibility policy explicitly changes this.

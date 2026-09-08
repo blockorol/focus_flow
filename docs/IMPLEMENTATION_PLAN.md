@@ -48,7 +48,7 @@ For every phase:
 
 ## Goal
 
-Create a working monorepo foundation with reproducible code generation, local backend-in-Docker development, direct Node.js frontend development, CI, and deployment documentation.
+Create a working monorepo foundation with reproducible code generation, local backend-and-PostgreSQL-in-Docker development, direct Node.js frontend development, CI, and deployment documentation.
 
 ## Includes
 
@@ -69,9 +69,7 @@ Create a working monorepo foundation with reproducible code generation, local ba
 
 ## Important local constraint
 
-Do not add a local PostgreSQL service.
-
-The local backend container connects to a Railway PostgreSQL public endpoint via local environment configuration.
+Do not install PostgreSQL directly on the host. As clarified by the user on 2026-09-05, local Compose contains the backend and PostgreSQL 17. A separate test Compose project provides disposable PostgreSQL, isolated from development data. Railway remains the production database.
 
 ## Acceptance criteria
 
@@ -83,7 +81,7 @@ The local backend container connects to a Railway PostgreSQL public endpoint via
 - generated files are committed;
 - CI detects generated-code drift;
 - README accurately explains local setup and deployment;
-- no local Postgres container exists.
+- PostgreSQL runs in Docker without a host installation; integration tests use isolated disposable data.
 
 ---
 

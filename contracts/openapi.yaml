@@ -1,0 +1,41 @@
+openapi: 3.0.3
+info:
+  title: FocusFlow API
+  version: 0.0.0
+  description: Repository foundation contract. Domain operations are added in later phases.
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+servers:
+  - url: http://localhost:8080
+    description: Local development
+tags:
+  - name: Health
+    description: Process liveness after successful application startup.
+paths:
+  /v1/health:
+    get:
+      operationId: getHealth
+      tags: [Health]
+      summary: Check process liveness
+      description: Public liveness check. Does not check ongoing database readiness.
+      security: []
+      responses:
+        '200':
+          description: The HTTP server is running.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: ok
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok]

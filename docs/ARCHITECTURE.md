@@ -23,10 +23,10 @@ localhost:8080
         |
         | PostgreSQL connection
         v
-Railway PostgreSQL public endpoint
+PostgreSQL in Docker (postgres:5432)
 ```
 
-No local PostgreSQL service.
+Local Compose contains backend and PostgreSQL 17. Do not install PostgreSQL directly on the host. An independently invoked `docker-compose.test.yml` starts disposable PostgreSQL for integration tests, isolated from development data. This topology was clarified by the user on 2026-09-05 and supersedes the initial remote-only development assumption.
 
 ### Production
 
@@ -386,6 +386,8 @@ Do not install build tools in the runtime stage.
 No local developer DB does not mean no DB tests.
 
 GitHub Actions should use a disposable PostgreSQL service for persistence integration tests.
+
+The same tests may also run against a disposable local PostgreSQL service from `docker-compose.test.yml`. This local test exception was explicitly approved by the user.
 
 Tests must never target the production database.
 

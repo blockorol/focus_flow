@@ -1,0 +1,7 @@
+extends:
+  - recommended
+rules:
+  # The bootstrap liveness operation has no client input or client-error response.
+  operation-4xx-response: off
+  # The only server documented during Phase 0 is the actual local development URL.
+  no-server-example.com: off

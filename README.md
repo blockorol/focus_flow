@@ -1,305 +1,304 @@
-# FocusFlow
+﻿# FocusFlow
 
 FocusFlow is a personal hierarchical object/work system.
 
 > Everything is a Focus.
 
-A Focus can contain child Focuses. A root Focus is called a **Flow**. Domain-specific behavior is added through strongly typed **Specifications**.
+A Focus can contain child Focuses. A root Focus is called a **Flow**. Domain-specific behavior is added later through strongly typed **Specifications**.
 
-```text
-Job Search
-├── Company A
-│   ├── HR Interview
-│   └── Technical Interview
-└── Company B
-```
+## Current phase
 
-The core deliberately stays small while Specifications add typed domain behavior later.
+The repository is in Phase 0: repository foundation. Phase 0 creates the monorepo structure, toolchain, OpenAPI bootstrap, Docker backend package, local Compose topology, migration tooling, and CI checks. It does not implement the core Focus/Goal database schema or Phase 1 API behavior.
 
-## Current state
+Authoritative project documents:
 
-The project is planned in phases. See:
+- [SCOPE.md](./SCOPE.md)
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+- [docs/IMPLEMENTATION_PLAN.md](./docs/IMPLEMENTATION_PLAN.md)
+- [docs/STATUS.md](./docs/STATUS.md)
+- [docs/DECISIONS.md](./docs/DECISIONS.md)
+- [docs/exec-plans/phase-0-foundation.md](./docs/exec-plans/phase-0-foundation.md)
+- [AGENTS.md](./AGENTS.md)
 
-- [`SCOPE.md`](./SCOPE.md) — product/domain scope.
-- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — architecture.
-- [`docs/IMPLEMENTATION_PLAN.md`](./docs/IMPLEMENTATION_PLAN.md) — phase workflow.
-- [`docs/STATUS.md`](./docs/STATUS.md) — current checkpoint.
-- [`AGENTS.md`](./AGENTS.md) — Codex operating instructions.
+## Stack
 
-## Planned stack
+Backend:
 
-### Backend
-
-- Go
+- Go 1.26.8
 - REST
-- PostgreSQL
+- contract-first OpenAPI
+- oapi-codegen
+- PostgreSQL 17
 - pgx
 - goose
-- OpenAPI / oapi-codegen
 - Docker
 
-### Frontend
+Frontend:
 
+- Node.js 22.14.x
+- npm 10.9.x
 - Next.js
 - React
 - TypeScript
 - Tailwind CSS
-- generated OpenAPI client/types
+- generated OpenAPI types/client boundary
 
-### Hosting
+Hosting:
 
 - frontend: Vercel
-- backend: Railway
-- PostgreSQL: Railway
+- backend: Railway, built from `backend/Dockerfile`
+- database: Railway PostgreSQL
 
 ## Repository layout
 
-Target layout:
-
 ```text
 .
-├── AGENTS.md
-├── SCOPE.md
-├── README.md
-├── contracts/
-│   └── openapi.yaml
-├── backend/
-│   ├── cmd/
-│   ├── internal/
-│   ├── migrations/
-│   └── Dockerfile
-├── frontend/
-├── docs/
-└── docker-compose.local.yml
+|-- AGENTS.md
+|-- SCOPE.md
+|-- README.md
+|-- contracts/
+|   `-- openapi.yaml
+|-- backend/
+|   |-- cmd/
+|   |-- internal/
+|   |-- migrations/
+|   |-- scripts/
+|   `-- Dockerfile
+|-- frontend/
+|-- docs/
+|-- docker-compose.local.yml
+`-- docker-compose.test.yml
 ```
 
-Frontend and backend are independently deployable even though they live in one monorepo.
+The frontend and backend are independently deployable even though they live in one monorepo.
 
----
+## Requirements
 
-# Local development
+Install on the host:
 
-## Topology
+- Go 1.26.8
+- Node.js 22.14.x with npm 10.9.x
+- Docker Desktop with Docker Compose v2
 
-The developer does **not** run PostgreSQL locally.
+Do not install PostgreSQL directly on the host for this project. Local PostgreSQL runs in Docker Compose.
 
-```text
-Next.js local process
-http://localhost:3000
-        |
-        v
-Go backend in Docker
-http://localhost:8080
-        |
-        v
-Railway PostgreSQL public connection
-```
+If dependency downloads fail because HTTPS traffic is intercepted by antivirus or a corporate proxy, fix the machine/network configuration. Do not add custom root certificates, npm `cafile` overrides, disabled TLS verification, or Docker certificate injection to this repository.
 
-The frontend runs directly with Node.js.
+## Install dependencies
 
-The backend runs through:
+Root tooling:
 
 ```bash
-docker compose -f docker-compose.local.yml up --build
+npm ci
 ```
 
-The local Compose file must not contain a PostgreSQL service.
+Frontend app:
 
-## Local database connection
+```bash
+npm --prefix frontend ci
+```
 
-Railway PostgreSQL is private by default.
+Go modules:
 
-For local development, enable Public Access/TCP Proxy for the Railway PostgreSQL service and use the external connection string exposed by Railway as `DATABASE_PUBLIC_URL`.
+```bash
+npm run go -- mod download
+npm run go -- mod verify
+```
 
-Copy that value into the backend local environment as the application's `DATABASE_URL`.
+## OpenAPI and generated code
 
-Example local file:
+The contract source of truth is:
 
 ```text
-backend/.env.local
+contracts/openapi.yaml
 ```
 
-Conceptual values:
+Generate committed backend and frontend API artifacts:
 
-```dotenv
-DATABASE_URL=<Railway DATABASE_PUBLIC_URL>
-APP_USERNAME=<local username>
-APP_PASSWORD_HASH=<argon2id hash>
-APP_TOKEN_SECRET=<local random secret>
-APP_ENV=local
+```bash
+npm run generate
 ```
 
-Do not commit this file.
+Validate the contract:
 
-Using the public Railway database endpoint can incur network egress charges.
+```bash
+npm run contract:lint
+```
 
-## Local CORS
+Check generated-code drift:
+
+```bash
+npm run check:generated
+```
+
+Generated outputs must not be edited by hand.
+
+## Local development topology
 
 Standard local development uses:
 
 ```text
-frontend: http://localhost:3000
-backend:  http://localhost:8080
+Next.js on the host
+http://localhost:3000
+        |
+        v
+Go backend in Docker Compose
+http://localhost:8080
+        |
+        v
+PostgreSQL 17 in the same Docker Compose project
+postgres:5432
 ```
 
-`docker-compose.local.yml` should configure the backend so `http://localhost:3000` is allowed automatically.
+Start backend and PostgreSQL:
 
-The developer should not need to manually change CORS settings for the normal local topology.
+```bash
+npm run backend:up
+```
 
-Do not use wildcard CORS with credentialed authentication.
+Stop them while preserving the development database volume:
 
-## Frontend local environment
+```bash
+npm run backend:down
+```
 
-Expected public frontend variable:
+Run the frontend directly with Node.js:
+
+```bash
+npm --prefix frontend run dev
+```
+
+The default Compose configuration allows the frontend origin `http://localhost:3000`, including credentialed browser requests. Standard local development should not require manual CORS changes.
+
+## Local environment files
+
+Copy examples when local overrides are needed:
+
+```text
+backend/.env.example -> backend/.env.local
+frontend/.env.example -> frontend/.env.local
+```
+
+`backend/.env.local` is optional for the Phase 0 Compose default because `docker-compose.local.yml` provides local database and CORS defaults. Use it for local secrets and overrides such as:
+
+```dotenv
+APP_USERNAME=local
+APP_PASSWORD_HASH=<argon2id hash>
+APP_TOKEN_SECRET=<local random secret>
+```
+
+The local Compose default database URL is internal to Docker Compose:
+
+```text
+postgres://focusflow:focusflow-local@postgres:5432/focusflow?sslmode=disable
+```
+
+Do not commit `.env.local` files.
+
+Frontend public configuration:
 
 ```dotenv
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 ```
 
-The exact filename is chosen by the frontend implementation, for example:
+Do not put backend secrets into `NEXT_PUBLIC_*` variables.
 
-```text
-frontend/.env.local
-```
+## Password hash helper
 
-Do not commit secrets into `NEXT_PUBLIC_*` variables.
-
-## Password hash
-
-The repository provides a helper:
+Build or start the backend image first, then run:
 
 ```bash
-make hash-password
+npm run hash-password
 ```
 
-It reads the password from stdin and prints an Argon2id hash.
+The helper reads the password from stdin and prints an encoded Argon2id hash. Never pass plaintext passwords as command-line arguments and never commit plaintext passwords.
 
-Use the result as:
+## Migrations
+
+Application migrations live in:
 
 ```text
-APP_PASSWORD_HASH
+backend/migrations/
 ```
 
-Never store the plaintext password in Git.
+Every SQL migration must contain both markers:
 
-## Local migrations
+```sql
+-- +goose Up
+-- +goose Down
+```
 
-The developer does not run a local database, but schema changes are still applied only through goose.
+Phase 0 intentionally ships no application SQL migration. It only adds the migration directory, wrapper, checks, and disposable test fixtures.
 
-Against the configured development Railway database:
+Run local development migrations through the backend container:
 
 ```bash
-make migrate-up
-make migrate-status
+npm run migrate:up
+npm run migrate:status
+npm run migrate:down
 ```
 
-Rollback when explicitly needed:
+The runtime image installs a migration wrapper at:
+
+```text
+/app/bin/migrate
+```
+
+Supported commands are `up`, `status`, and `down`.
+
+## Checks
+
+Contract and generation:
 
 ```bash
-make migrate-down
+npm run contract:lint
+npm run generate
+npm run check:generated
 ```
 
-The exact Make targets are implemented in Phase 0/1.
+Backend checks using host Go:
 
-Be deliberate when running migration commands because the configured database is remote.
-
-Use a non-production Railway environment/database for development.
-
----
-
-# Environment variables
-
-## Backend application variables — set manually
-
-These are application-owned and must be configured manually in Railway:
-
-```text
-APP_USERNAME
-APP_PASSWORD_HASH
-APP_TOKEN_SECRET
-CORS_ALLOWED_ORIGINS
-APP_ENV
+```bash
+npm run check:backend
 ```
 
-Potential cookie configuration may also be explicit depending on the Phase 1 auth implementation, for example:
+Frontend checks:
 
-```text
-COOKIE_SECURE
-COOKIE_SAME_SITE
+```bash
+npm run check:frontend
 ```
 
-The exact set must be documented when auth is implemented.
+Migration structure checks:
 
-## Backend database variable — Railway reference
-
-Do not paste production PostgreSQL credentials into the backend service.
-
-Configure the backend Railway service variable:
-
-```text
-DATABASE_URL=${{Postgres.DATABASE_URL}}
+```bash
+npm run check:migrations
 ```
 
-where `Postgres` is the actual Railway PostgreSQL service name.
+Backend Docker and Compose checks:
 
-Railway resolves the referenced database URL and keeps it in sync with the database service.
-
-PostgreSQL itself exposes variables including:
-
-```text
-PGHOST
-PGPORT
-PGUSER
-PGPASSWORD
-PGDATABASE
-DATABASE_URL
+```bash
+npm run check:docker
 ```
 
-The application should normally need only `DATABASE_URL`.
+Disposable local database migration fixture check:
 
-## Railway-provided variables
-
-Railway provides platform variables such as:
-
-```text
-RAILWAY_PUBLIC_DOMAIN
-RAILWAY_PRIVATE_DOMAIN
-RAILWAY_PROJECT_NAME
-RAILWAY_ENVIRONMENT_NAME
-RAILWAY_SERVICE_NAME
+```bash
+npm run test:database:local
 ```
 
-Do not manually create copies unless the application has a concrete use for them.
+This command uses `docker-compose.test.yml`, a separate Compose project, and disposable PostgreSQL data. It must never target development or production data.
 
-## Local-only variables
+## Production deployment
 
-Local backend configuration uses an external database URL, normally copied from Railway's:
+### Frontend: Vercel
 
-```text
-DATABASE_PUBLIC_URL
-```
-
-into local:
-
-```text
-DATABASE_URL
-```
-
-Do not configure production backend with `DATABASE_PUBLIC_URL`; production should use the private `DATABASE_URL` reference.
-
----
-
-# Production deployment
-
-## Frontend — Vercel
-
-Create a Vercel project whose root directory is:
+Create a Vercel project with root directory:
 
 ```text
 frontend
 ```
 
-Configure the production API URL, for example:
+Configure:
 
 ```text
 NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>
@@ -307,128 +306,71 @@ NEXT_PUBLIC_API_BASE_URL=https://<backend-domain>
 
 No backend secrets belong in Vercel public variables.
 
-The exact Vercel environment variable list must stay documented here as frontend configuration evolves.
+### Backend: Railway
 
-## Backend — Railway
-
-Create a Railway service from the monorepo.
-
-Set the service root directory to:
+Create a Railway service from this monorepo with root directory:
 
 ```text
 /backend
 ```
 
-Railway builds the service from:
+Railway builds from:
 
 ```text
 backend/Dockerfile
 ```
 
-The repository does not use Docker Compose as the Railway production deployment unit.
+Configure health check path:
 
-Create/generate a public backend domain in Railway networking.
+```text
+/v1/health
+```
 
-## PostgreSQL — Railway
+### PostgreSQL: Railway
 
-Provision PostgreSQL in the same Railway project/environment.
+Provision Railway PostgreSQL in the same project/environment as the backend service.
 
-In the backend service, add a reference variable:
+Configure the backend service database variable as a Railway reference variable:
 
 ```text
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 ```
 
-Use the actual database service name if it differs from `Postgres`.
+Use the actual Railway PostgreSQL service name if it differs from `Postgres`.
 
-This production connection uses Railway private networking.
-
----
-
-# Production migrations
-
-All database migrations are goose migrations committed in:
+Manually configure application-owned backend variables:
 
 ```text
-backend/migrations/
+APP_USERNAME
+APP_PASSWORD_HASH
+APP_TOKEN_SECRET
+APP_ENV
+CORS_ALLOWED_ORIGINS
 ```
 
-Normal SQL migrations contain both:
+Future authentication work may add cookie-related variables. Document them here when they are introduced.
 
-```sql
--- +goose Up
-...
+## Production migrations
 
--- +goose Down
-...
-```
-
-Configure a Railway **pre-deploy command** that runs:
+Configure Railway pre-deploy command:
 
 ```text
-goose up
+/app/bin/migrate up
 ```
 
-using the production `DATABASE_URL` and the repository migration directory.
+The command uses the backend service `DATABASE_URL`. A migration failure must block deployment. Application rollback and database rollback are separate operational decisions; do not automatically run `goose down` during application rollback.
 
-The exact command depends on the final runtime image layout and is documented here when Phase 0 creates the Dockerfile.
+## CI/CD
 
-The Docker runtime image must therefore contain:
+GitHub Actions is the CI source of truth. The workflow runs contract, backend, frontend, database, Docker, and aggregate `CI` jobs on pull requests and pushes to `main`.
 
-- the goose executable or project migration runner;
-- migration files.
+Railway production deployment should wait for the successful aggregate GitHub Actions check before deploying. Vercel production promotion should also use commits that passed CI.
 
-If the pre-deploy migration command fails, the deployment must not continue.
+No production deployment tokens or deployment jobs are added in Phase 0.
 
-Application rollback and database rollback are separate decisions. Do not automatically execute `goose down` during application rollback.
+## Authentication deployment note
 
----
-
-# CI/CD
-
-GitHub Actions is the CI source of truth.
-
-CI should run:
-
-## Contract
-
-- OpenAPI validation
-- Go generation
-- TypeScript generation
-- generated-code drift check
-
-## Backend
-
-- format
-- lint/static analysis
-- `go vet`
-- tests
-- integration tests
-- build
-- Docker image build
-- goose migration validation
-
-## Frontend
-
-- install from lockfile
-- lint
-- typecheck
-- tests
-- production build
-
-Persistence integration tests should use a disposable PostgreSQL service in CI.
-
-They must not use the developer or production Railway database.
-
-Railway production deployment should wait for successful GitHub CI.
-
----
-
-# Authentication deployment note
-
-The initial browser architecture uses an HttpOnly auth cookie while frontend and backend are separate origins.
-
-Production CORS must explicitly allow the Vercel frontend origin and allow credentialed requests.
+The planned browser architecture uses an HttpOnly auth cookie while frontend and backend are separate origins. Production CORS must explicitly allow the Vercel frontend origin and allow credentialed requests.
 
 If Vercel and Railway default domains cause browser third-party-cookie restrictions, use custom sibling domains, for example:
 
@@ -437,43 +379,14 @@ app.example.com
 api.example.com
 ```
 
-rather than proxying the backend through Vercel.
+## Specification rule
 
----
+Specifications are strongly typed at the OpenAPI boundary. Storage may use JSONB, but supported Specification variants are represented by explicit OpenAPI schemas and generated backend/frontend types.
 
-# Specifications and the API contract
-
-Specifications are strongly typed.
-
-Storage uses JSONB, but the OpenAPI contract does not expose arbitrary JSON for supported Specification types.
-
-A new type is implemented as one coordinated monorepo change:
+A new Specification type is implemented as one coordinated monorepo change:
 
 ```text
-OpenAPI
-  + backend
-  + frontend
-  + tests
+OpenAPI + backend + frontend + tests
 ```
 
-This intentionally favors correctness over unknown-extension compatibility.
-
----
-
-# Development workflow with Codex
-
-Codex instructions live in `AGENTS.md`.
-
-The key workflow is:
-
-1. work one phase at a time;
-2. re-read repository source-of-truth docs before each phase;
-3. create a detailed small-step phase plan;
-4. discuss material questions with the user;
-5. get phase approval;
-6. implement step by step;
-7. validate each step;
-8. persist decisions/status in repository docs;
-9. re-read docs before the next phase.
-
-This prevents long-running implementation from depending on conversational memory.
+Do not expose a weakly typed public Specification CRUD API as a placeholder.

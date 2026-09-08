@@ -1,4 +1,4 @@
-# FocusFlow — Project Scope
+# FocusFlow â€” Project Scope
 
 ## 1. Product overview
 
@@ -10,17 +10,17 @@ The core idea is:
 
 > Everything is a Focus.
 
-A Focus can contain child Focuses. A root Focus — a Focus without a parent — is called a **Flow**.
+A Focus can contain child Focuses. A root Focus â€” a Focus without a parent â€” is called a **Flow**.
 
 Example:
 
 ```text
 Job Search
-├── Workato
-│   ├── HR Interview
-│   ├── Technical Interview
-│   └── Final Interview
-└── Another Company
+â”œâ”€â”€ Workato
+â”‚   â”œâ”€â”€ HR Interview
+â”‚   â”œâ”€â”€ Technical Interview
+â”‚   â””â”€â”€ Final Interview
+â””â”€â”€ Another Company
 ```
 
 `Job Search` is a Flow. Every node in the tree is still a Focus.
@@ -90,13 +90,13 @@ cancelled
 
 Semantics:
 
-- `idea` — worth tracking, but there is no concrete plan yet.
-- `planned` — there is a concrete plan/intention, but work has not started.
-- `active` — currently in progress.
-- `paused` — intentionally paused by the user.
-- `waiting` — blocked on an external response, event, person, or dependency.
-- `done` — successfully completed.
-- `cancelled` — intentionally abandoned.
+- `idea` â€” worth tracking, but there is no concrete plan yet.
+- `planned` â€” there is a concrete plan/intention, but work has not started.
+- `active` â€” currently in progress.
+- `paused` â€” intentionally paused by the user.
+- `waiting` â€” blocked on an external response, event, person, or dependency.
+- `done` â€” successfully completed.
+- `cancelled` â€” intentionally abandoned.
 
 `done` and `cancelled` are terminal statuses.
 
@@ -545,11 +545,11 @@ Models are separated into layers:
 
 ```text
 API/generated models
-        ↓
+        â†“
 core/internal models
-        ↓
+        â†“
 storage interface
-        ↓
+        â†“
 PostgreSQL storage models
 ```
 
@@ -608,8 +608,8 @@ Expected direction:
 
 ```text
 contracts/openapi.yaml
-    ├── backend/internal/api/generated/
-    └── frontend/src/api/generated/
+    â”œâ”€â”€ backend/internal/api/generated/
+    â””â”€â”€ frontend/src/api/generated/
 ```
 
 CI regenerates both outputs and fails if generated code differs from committed files.
@@ -648,39 +648,15 @@ No manual production schema edits.
 
 ## 17. Local development topology
 
-The user does not want a local PostgreSQL instance.
+The user does not want PostgreSQL installed directly on the host. Local PostgreSQL runs in Docker, as clarified on 2026-09-05 (D-024).
 
-Local development is:
+Local development uses a Next.js process at http://localhost:3000 and a Go backend container at http://localhost:8080. The backend connects to PostgreSQL 17 through the Compose service hostname postgres:5432.
 
-```text
-Browser
-   ↓
-Next.js dev server
-http://localhost:3000
-   ↓
-Go backend in Docker
-http://localhost:8080
-   ↓
-Railway PostgreSQL public endpoint
-```
+The local Compose file, docker-compose.local.yml, contains backend and PostgreSQL. Use a named volume for development data. docker-compose.test.yml provides a separate disposable database for integration tests and must never access development or production data.
 
-The frontend runs directly with Node.js.
+The backend environment is configured through backend/.env.local and Compose defaults. Standard localhost:3000 CORS is configured automatically. Do not require browser-security changes for normal local development.
 
-The backend runs through:
-
-```text
-docker-compose.local.yml
-```
-
-The local Compose file contains the backend only.
-
-It does not start PostgreSQL.
-
-The local backend uses a local `.env.local` file containing a database URL suitable for external access to the Railway Postgres instance.
-
-The standard local frontend origin must already be configured for CORS by the local Compose configuration.
-
-Do not require the user to disable browser security or manually modify headers for normal local development.
+Railway PostgreSQL remains the production database; remote credentials are not required for local development.
 
 ---
 
@@ -688,11 +664,11 @@ Do not require the user to disable browser security or manually modify headers f
 
 ```text
 Vercel
-  └── frontend
+  â””â”€â”€ frontend
 
 Railway
-  ├── backend
-  └── PostgreSQL
+  â”œâ”€â”€ backend
+  â””â”€â”€ PostgreSQL
 ```
 
 Frontend and backend deploy independently.
@@ -735,7 +711,7 @@ CI runs on pull requests and pushes to `main`.
 
 ### Database tests
 
-The developer does not run PostgreSQL locally.
+The developer does not install PostgreSQL directly on the host. Local development and CI use PostgreSQL in Docker/containers.
 
 CI may and should use a disposable PostgreSQL service/container for integration tests.
 
@@ -758,43 +734,43 @@ CI may and should use a disposable PostgreSQL service/container for integration 
 
 ## 20. Implementation phases
 
-### Phase 0 — Repository foundation
+### Phase 0 â€” Repository foundation
 
 Create the repository skeleton and development/deployment foundation.
 
-### Phase 1 — Core backend
+### Phase 1 â€” Core backend
 
 Implement authentication, Focus, Goal, Goal links, Specification infrastructure, Events, persistence, services, REST API, hierarchy protection, pagination, and tests.
 
 No domain Specification type yet.
 
-### Phase 2 — Generic UI
+### Phase 2 â€” Generic UI
 
 Implement login, application shell, Flow list/cards, and create Flow.
 
-### Phase 3 — Focus page
+### Phase 3 â€” Focus page
 
 Implement Focus details, breadcrumbs/hierarchy, children, Goals, and the base area where typed Specification blocks will later render.
 
-### Phase 4 — Editing
+### Phase 4 â€” Editing
 
 Implement generic editing for Focus, hierarchy, tags, status, description, feedback, color, Goals, and Goal links.
 
-### Phase 5 — First Specification
+### Phase 5 â€” First Specification
 
 Define and implement the first domain Specification for job-search/job-position tracking.
 
 The exact contract is designed at the start of this phase.
 
-### Phase 6 — Activity
+### Phase 6 â€” Activity
 
 Expose stored events through a typed read API and build Activity UI.
 
-### Phase 7 — Observability
+### Phase 7 â€” Observability
 
 Add structured logs, request IDs, latency/error visibility, DB timing, and then OpenTelemetry where useful.
 
-### Phase 8 — MCP
+### Phase 8 â€” MCP
 
 Add an MCP adapter over the existing application services.
 
@@ -828,7 +804,7 @@ Do not implement without explicit approval:
 - CQRS;
 - `ltree`;
 - separate tag entities;
-- local developer PostgreSQL;
+- PostgreSQL installed directly on the developer host;
 - schema-generated dynamic frontend;
 - arbitrary user-created Specification schemas;
 - public API keys;
