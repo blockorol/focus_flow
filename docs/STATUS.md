@@ -82,9 +82,10 @@ BE full MVP point 1 is complete and awaiting review/commit checkpoint. Do not st
 
 Completed:
 
-- OpenAPI component schemas for backend MVP model shapes, without adding new CRUD/auth paths.
-- Internal/core backend models in `backend/internal/model/`.
-- PostgreSQL-local row models with `db` tags in `backend/internal/storage/postgres/`.
+- `contracts/openapi.yaml` kept health-only; API request/response models are deferred to the API contract/stub point.
+- Internal/core aggregate backend models in `backend/internal/model/`.
+- API model package documentation in `backend/internal/api/model/`, without API request/response models yet.
+- PostgreSQL-local row models with `db` tags and boundary comments in `backend/internal/storage/postgres/`.
 - Model/tag shape tests.
 
 Validation:
@@ -94,6 +95,7 @@ Validation:
 - `go vet ./...`.
 - `go tool staticcheck ./...`.
 - `go build -o .tmp/check-backend/api.exe ./cmd/api`.
+- `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`.
 
 Not done in point 1:
 

@@ -7,7 +7,7 @@ type User struct {
 	Username string
 }
 
-type AuthSession struct {
+type Session struct {
 	User      User
 	ExpiresAt time.Time
 }

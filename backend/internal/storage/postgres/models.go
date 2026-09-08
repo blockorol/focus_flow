@@ -7,6 +7,11 @@ import (
 	"github.com/google/uuid"
 )
 
+// PostgreSQL row models are local to this package.
+//
+// They mirror database rows and scanning needs only. Do not pass these structs
+// to services, API handlers, or frontend-facing code. Convert them to and from
+// internal model package values at the PostgreSQL storage boundary.
 type focusObjectRow struct {
 	ID          uuid.UUID  `db:"id"`
 	ParentID    *uuid.UUID `db:"parent_id"`

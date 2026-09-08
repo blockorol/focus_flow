@@ -18,10 +18,11 @@ type GoalProgress struct {
 
 type Goal struct {
 	ID             GoalID
-	FocusObjectID  FocusID
+	OwnerFocusID   FocusID
 	Type           GoalType
 	Description    string
 	StatusOverride *FocusStatus
+	LinkedFocusIDs []FocusID
 	Progress       GoalProgress
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
@@ -29,10 +30,11 @@ type Goal struct {
 }
 
 type CreateGoal struct {
-	FocusObjectID  FocusID
+	OwnerFocusID   FocusID
 	Type           GoalType
 	Description    string
 	StatusOverride *FocusStatus
+	LinkedFocusIDs []FocusID
 }
 
 type UpdateGoal struct {
@@ -40,9 +42,10 @@ type UpdateGoal struct {
 	Type           *GoalType
 	Description    *string
 	StatusOverride NullableUpdate[FocusStatus]
+	LinkedFocusIDs *[]FocusID
 }
 
 type GoalFocusLink struct {
-	GoalID        GoalID
-	FocusObjectID FocusID
+	GoalID  GoalID
+	FocusID FocusID
 }

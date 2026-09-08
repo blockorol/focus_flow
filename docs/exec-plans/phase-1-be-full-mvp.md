@@ -124,9 +124,9 @@ Converter/builder style:
 ### 1. Backend models only, no logic
 
 - [x] **Goal:** define the model shapes for API support, internal/core behavior, and PostgreSQL storage without implementing behavior.
-- **Files/packages expected to change:** `contracts/openapi.yaml`; generated API files; `backend/internal/model/` or similarly named internal model packages; PostgreSQL-local model files under `backend/internal/storage/postgres/`; model tests where useful for zero-value/compile-time shape checks.
-- **Commands/checks:** `go tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml`; `go fmt ./...`; `go test ./...`; `go vet ./...`; `go tool staticcheck ./...`; `go build -o .tmp/check-backend/api ./cmd/api`.
-- **Acceptance criteria:** models compile; dependency direction is correct; no validation, persistence, auth, status transition, hierarchy, or handler behavior is implemented in this point; API/core/storage models are visibly separate.
+- **Files/packages expected to change:** `backend/internal/model/`; API model package documentation under `backend/internal/api/model/`; PostgreSQL-local model files under `backend/internal/storage/postgres/`; model tests where useful for shape checks. `contracts/openapi.yaml` remains health-only until the API point.
+- **Commands/checks:** `go tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml`; `gofmt -w ...`; `go test ./...`; `go vet ./...`; `go tool staticcheck ./...`; `go build -o .tmp/check-backend/api.exe ./cmd/api`; `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`.
+- **Acceptance criteria:** internal aggregate models and PostgreSQL-local row models compile; dependency direction is correct; no API request/response model implementation yet; no validation, persistence, auth, status transition, hierarchy, or handler behavior is implemented in this point.
 
 ### 2. Converters/builders
 
@@ -191,10 +191,12 @@ Converter/builder style:
 
 ## Point 1 completion notes
 
-- Added OpenAPI component schemas for the generic backend MVP models without adding CRUD/auth paths beyond the existing health endpoint.
-- Added internal/core model definitions under `backend/internal/model/`.
-- Added PostgreSQL-local row model definitions under `backend/internal/storage/postgres/` with `db` tags.
+- Kept `contracts/openapi.yaml` health-only. API request/response models will be designed with the API contract/stub point, not in backend model point 1.
+- Added internal/core aggregate model definitions under `backend/internal/model/`; `Focus` can hold nested children, goals, and specifications for depth/include-style service responses.
+- Added `FocusQuery` as an internal query shape for depth/include requirements without defining API parameters yet.
+- Added PostgreSQL-local row model definitions under `backend/internal/storage/postgres/` with `db` tags and package comments forbidding leakage into services/API.
+- Added API model package documentation under `backend/internal/api/model/` without request/response models yet.
+- Documented that generic `Specification.Data` is infrastructure/storage-oriented and must be decoded into typed internal Specification variants before reaching the API/frontend.
 - Added lightweight compile/tag tests for model shape checks.
-- No converters, API stubs, auth service, service layer, migrations, SQL queries, or persistence logic were added in point 1.
-- Validation run: `go tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml`, `go test ./...`, `go vet ./...`, `go tool staticcheck ./...`, and `go build -o .tmp/check-backend/api.exe ./cmd/api` from `backend/`.
-- Frontend TypeScript generation was not run in this backend-only point because backend validation must use native Go commands, not npm wrappers. Run frontend/contract generation at the next contract/frontend sync checkpoint.
+- No converters, API stubs, auth service, middleware, service layer, migrations, SQL queries, or persistence logic were added in point 1.
+- Validation run from `backend/`: `go tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml`, `gofmt -w ...`, `go test ./...`, `go vet ./...`, `go tool staticcheck ./...`, `go build -o .tmp/check-backend/api.exe ./cmd/api`, and `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`.

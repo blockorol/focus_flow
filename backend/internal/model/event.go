@@ -14,11 +14,11 @@ const (
 )
 
 type FocusEvent struct {
-	ID            EventID
-	FocusObjectID *FocusID
-	GoalID        *GoalID
-	Type          string
-	Source        EventSource
-	Data          json.RawMessage
-	CreatedAt     time.Time
+	ID        EventID
+	FocusID   *FocusID
+	GoalID    *GoalID
+	Type      string
+	Source    EventSource
+	Data      json.RawMessage
+	CreatedAt time.Time
 }

@@ -15,17 +15,28 @@ const (
 )
 
 type Focus struct {
-	ID          FocusID
-	ParentID    *FocusID
-	Name        string
-	Status      FocusStatus
-	Tags        []string
-	Description *string
-	Feedback    *string
-	Color       *string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	FinishedAt  *time.Time
+	ID             FocusID
+	ParentID       *FocusID
+	Name           string
+	Status         FocusStatus
+	Tags           []string
+	Description    *string
+	Feedback       *string
+	Color          *string
+	Goals          []Goal
+	Specifications []Specification
+	Children       []Focus
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	FinishedAt     *time.Time
+}
+
+type FocusQuery struct {
+	ID                  FocusID
+	IncludeGoals        bool
+	IncludeSpecs        bool
+	DescendantDepth     int
+	ChildrenPageRequest *PageRequest
 }
 
 type CreateFocus struct {
