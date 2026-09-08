@@ -1,4 +1,4 @@
-# FocusFlow â€” Project Scope
+# FocusFlow - Project Scope
 
 ## 1. Product overview
 
@@ -10,17 +10,17 @@ The core idea is:
 
 > Everything is a Focus.
 
-A Focus can contain child Focuses. A root Focus â€” a Focus without a parent â€” is called a **Flow**.
+A Focus can contain child Focuses. A root Focus - a Focus without a parent - is called a **Flow**.
 
 Example:
 
 ```text
 Job Search
-â”œâ”€â”€ Workato
-â”‚   â”œâ”€â”€ HR Interview
-â”‚   â”œâ”€â”€ Technical Interview
-â”‚   â””â”€â”€ Final Interview
-â””â”€â”€ Another Company
+|-- Workato
+|   |-- HR Interview
+|   |-- Technical Interview
+|   `-- Final Interview
+`-- Another Company
 ```
 
 `Job Search` is a Flow. Every node in the tree is still a Focus.
@@ -90,13 +90,13 @@ cancelled
 
 Semantics:
 
-- `idea` â€” worth tracking, but there is no concrete plan yet.
-- `planned` â€” there is a concrete plan/intention, but work has not started.
-- `active` â€” currently in progress.
-- `paused` â€” intentionally paused by the user.
-- `waiting` â€” blocked on an external response, event, person, or dependency.
-- `done` â€” successfully completed.
-- `cancelled` â€” intentionally abandoned.
+- `idea` - worth tracking, but there is no concrete plan yet.
+- `planned` - there is a concrete plan/intention, but work has not started.
+- `active` - currently in progress.
+- `paused` - intentionally paused by the user.
+- `waiting` - blocked on an external response, event, person, or dependency.
+- `done` - successfully completed.
+- `cancelled` - intentionally abandoned.
 
 `done` and `cancelled` are terminal statuses.
 
@@ -545,11 +545,11 @@ Models are separated into layers:
 
 ```text
 API/generated models
-        â†“
+        v
 core/internal models
-        â†“
+        v
 storage interface
-        â†“
+        v
 PostgreSQL storage models
 ```
 
@@ -608,8 +608,8 @@ Expected direction:
 
 ```text
 contracts/openapi.yaml
-    â”œâ”€â”€ backend/internal/api/generated/
-    â””â”€â”€ frontend/src/api/generated/
+    |-- backend/internal/api/generated/
+    `-- frontend/src/api/generated/
 ```
 
 CI regenerates both outputs and fails if generated code differs from committed files.
@@ -664,11 +664,11 @@ Railway PostgreSQL remains the production database; remote credentials are not r
 
 ```text
 Vercel
-  â””â”€â”€ frontend
+  `-- frontend
 
 Railway
-  â”œâ”€â”€ backend
-  â””â”€â”€ PostgreSQL
+  |-- backend
+  `-- PostgreSQL
 ```
 
 Frontend and backend deploy independently.
@@ -734,43 +734,43 @@ CI may and should use a disposable PostgreSQL service/container for integration 
 
 ## 20. Implementation phases
 
-### Phase 0 â€” Repository foundation
+### Phase 0 - Repository foundation
 
 Create the repository skeleton and development/deployment foundation.
 
-### Phase 1 â€” Core backend
+### Phase 1 - Core backend
 
 Implement authentication, Focus, Goal, Goal links, Specification infrastructure, Events, persistence, services, REST API, hierarchy protection, pagination, and tests.
 
 No domain Specification type yet.
 
-### Phase 2 â€” Generic UI
+### Phase 2 - Generic UI
 
 Implement login, application shell, Flow list/cards, and create Flow.
 
-### Phase 3 â€” Focus page
+### Phase 3 - Focus page
 
 Implement Focus details, breadcrumbs/hierarchy, children, Goals, and the base area where typed Specification blocks will later render.
 
-### Phase 4 â€” Editing
+### Phase 4 - Editing
 
 Implement generic editing for Focus, hierarchy, tags, status, description, feedback, color, Goals, and Goal links.
 
-### Phase 5 â€” First Specification
+### Phase 5 - First Specification
 
 Define and implement the first domain Specification for job-search/job-position tracking.
 
 The exact contract is designed at the start of this phase.
 
-### Phase 6 â€” Activity
+### Phase 6 - Activity
 
 Expose stored events through a typed read API and build Activity UI.
 
-### Phase 7 â€” Observability
+### Phase 7 - Observability
 
 Add structured logs, request IDs, latency/error visibility, DB timing, and then OpenTelemetry where useful.
 
-### Phase 8 â€” MCP
+### Phase 8 - MCP
 
 Add an MCP adapter over the existing application services.
 

@@ -86,7 +86,10 @@ jobs:
 
       - name: Build
         working-directory: backend
-        run: go build ./cmd/api ./cmd/hash-password
+        run: |
+          mkdir -p .tmp/ci-build
+          go build -o .tmp/ci-build/api ./cmd/api
+          go build -o .tmp/ci-build/hash-password ./cmd/hash-password
 
   frontend:
     name: Frontend

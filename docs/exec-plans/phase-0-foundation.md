@@ -1,4 +1,4 @@
-# Phase 0 Ã¢â‚¬â€ Repository foundation
+# Phase 0 - Repository foundation
 
 Status: approved on 2026-09-05; implementation in progress. All repository content is English; user communication is Russian.
 
@@ -111,7 +111,7 @@ Railway's service root remains `/backend`, where the repository's `backend/Docke
 - Local commands reuse the backend service, e.g. `docker compose -f docker-compose.local.yml run --rm --no-deps backend /app/bin/migrate up` and the equivalent `status`. Expose npm/Make aliases. No migration on ordinary API startup.
 - Production pre-deploy command: **`/app/bin/migrate up`**. It uses Railway's private `DATABASE_URL` reference; failed migrations must block deployment. The no-migrations behavior makes this command usable during Phase 0 without schema changes. [Railway pre-deploy documentation](https://docs.railway.com/deployments/pre-deploy-command).
 - Every committed migration must have executable Up and Down sections. A static check validates naming/order/unique versions and both markers; goose execution in CI validates actual SQL behavior.
-- To test tooling now, keep a reversible test-only SQL fixture under `backend/testdata/migrations/`, outside the shipped migration directory. Run Up Ã¢â€ â€™ Down Ã¢â€ â€™ Up against disposable CI PostgreSQL and verify the fixture table's presence/absence and goose status. Also test malformed SQL failure propagation and the empty-directory case. Run this fixture only on disposable test PostgreSQL, never development data or Railway; exclude it from the runtime image.
+- To test tooling now, keep a reversible test-only SQL fixture under `backend/testdata/migrations/`, outside the shipped migration directory. Run Up -> Down -> Up against disposable CI PostgreSQL and verify the fixture table's presence/absence and goose status. Also test malformed SQL failure propagation and the empty-directory case. Run this fixture only on disposable test PostgreSQL, never development data or Railway; exclude it from the runtime image.
 - Phase 0 makes no application schema changes to any production database. Local test Compose and CI may create the fixture and goose bookkeeping in their disposable databases.
 
 ## GitHub Actions structure
@@ -181,14 +181,14 @@ The steps below are the Phase 0 review slices. Checkboxes reflect the current im
 
 - [x] **Goal:** run the generated HTTP adapter with the approved startup and browser behavior.
 - **Files/packages:** `backend/cmd/api/`, handwritten `backend/internal/api/` handler/router/CORS code and tests; startup assembly.
-- **Commands/checks:** `go test ./...`; `go vet ./...`; `go build ./cmd/api`; HTTP tests for the exact health schema, allowed/disallowed origins, credentialed preflight, and graceful shutdown.
+- **Commands/checks:** `go test ./...`; `go vet ./...`; `go build -o <ignored-temp-dir>/api ./cmd/api`; HTTP tests for the exact health schema, allowed/disallowed origins, credentialed preflight, and graceful shutdown.
 - **Acceptance:** health returns the generated typed response; server binds the configured port after successful database startup; startup failure exits nonzero; CORS supports localhost:3000 without wildcard credentials; no business logic resides in handlers.
 
 ### 8. Add the stdin password hash utility
 
 - [x] **Goal:** make the documented secret-bootstrap helper real without adding authentication endpoints.
 - **Files/packages:** `backend/cmd/hash-password/` and narrowly scoped hashing implementation/tests; dependency pins; root/Make command aliases.
-- **Commands/checks:** focused Go tests for Argon2id encoding, random salt, verification, empty input, and stdin line endings; `go build ./cmd/hash-password`; a dummy stdin smoke check.
+- **Commands/checks:** focused Go tests for Argon2id encoding, random salt, verification, empty input, and stdin line endings; `go build -o <ignored-temp-dir>/hash-password ./cmd/hash-password`; a dummy stdin smoke check.
 - **Acceptance:** reads password only from stdin, writes an encoded Argon2id hash, never requires a plaintext CLI argument; no insecure default password or token secret. Document compatible parameters for Phase 1; do not implement sessions here.
 
 ### 9. Package the backend and goose runtime
@@ -203,7 +203,7 @@ The steps below are the Phase 0 review slices. Checkboxes reflect the current im
 - [ ] **Goal:** make all relevant checks repeatable and demonstrate that CI catches contract drift and migration failure.
 - **Files/packages:** root check scripts/aliases, Staticcheck pin, migration/drift check helpers and tests, `.github/workflows/ci.yml`, backend connection integration test/CI fixture runner.
 - **Commands/checks:** `npm run contract:lint`; `npm run generate`; `npm run check:generated`; `npm run check:backend` (gofmt check, vet, Staticcheck, unit tests, build); `npm run check:frontend` (lint, typecheck, tests, build); `npm run check:migrations`; `npm run test:database:local` and CI `npm run test:database`; backend Docker build.
-- **Acceptance:** all jobs described above execute; database fixture passes Up Ã¢â€ â€™ Down Ã¢â€ â€™ Up and connectivity test on disposable CI PostgreSQL; invalid migration fails; generated-file modification, deletion, and untracked addition each fail the drift checker in an isolated test checkout/temp fixture. No production/development DB is used by CI. Use the separate test Compose project for local integration checks.
+- **Acceptance:** all jobs described above execute; database fixture passes Up -> Down -> Up and connectivity test on disposable CI PostgreSQL; invalid migration fails; generated-file modification, deletion, and untracked addition each fail the drift checker in an isolated test checkout/temp fixture. No production/development DB is used by CI. Use the separate test Compose project for local integration checks.
 
 ### 11. Complete setup documentation and phase acceptance
 

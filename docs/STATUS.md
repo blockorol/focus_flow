@@ -19,6 +19,7 @@ Phase 0 - Repository foundation. Approved on 2026-09-05; implementation in progr
 - Added the Next.js/TypeScript frontend foundation, generated API type boundary, API client helper, placeholder page, and frontend tests.
 - Added `backend/Dockerfile`, backend migration wrapper, migration directory documentation, local/test Compose files, migration validation, and disposable migration fixtures.
 - Added GitHub Actions CI structure for contract, backend, frontend, database, Docker, and aggregate checks.
+- Updated backend build checks so local binaries are written only to ignored temporary output paths, not source directories.
 - Updated README with the current local, migration, CI, Railway, and Vercel workflows.
 
 ## Decisions recorded
@@ -46,8 +47,8 @@ Passed:
 - `go vet ./...`.
 - `go tool staticcheck ./...`.
 - `go test ./...`.
-- `go build ./cmd/api`.
-- `go build ./cmd/hash-password`.
+- `go build -o <ignored-temp-dir>/api ./cmd/api`.
+- `go build -o <ignored-temp-dir>/hash-password ./cmd/hash-password`.
 - `npm run check:backend`.
 - `npm run check:frontend`.
 - `npm run check:migrations`.
