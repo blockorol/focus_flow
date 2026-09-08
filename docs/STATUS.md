@@ -76,4 +76,30 @@ Blocked locally:
 
 ## Next action
 
-Review and approve [the BE full MVP execution plan](exec-plans/phase-1-be-full-mvp.md). After approval, start only point 1: backend models without logic.
+BE full MVP point 1 is complete and awaiting review/commit checkpoint. Do not start point 2 converters/builders until the user approves continuing. Backend validation for this point used native Go commands directly, not npm wrappers.
+
+## BE full MVP point 1 result
+
+Completed:
+
+- OpenAPI component schemas for backend MVP model shapes, without adding new CRUD/auth paths.
+- Internal/core backend models in `backend/internal/model/`.
+- PostgreSQL-local row models with `db` tags in `backend/internal/storage/postgres/`.
+- Model/tag shape tests.
+
+Validation:
+
+- `go tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml`.
+- `go test ./...`.
+- `go vet ./...`.
+- `go tool staticcheck ./...`.
+- `go build -o .tmp/check-backend/api.exe ./cmd/api`.
+
+Not done in point 1:
+
+- no converters/builders;
+- no API stubs;
+- no auth service or middleware;
+- no service layer;
+- no migrations or PostgreSQL queries;
+- no frontend product work.

@@ -1,6 +1,6 @@
 # Phase 1 - BE full MVP
 
-Status: draft, awaiting user approval. Do not start implementation until approved.
+Status: approved for point 1 on 2026-09-08. Implement only backend models without logic until the next checkpoint.
 
 ## Goal
 
@@ -30,13 +30,18 @@ The phase intentionally starts with backend-only work. It should produce a compl
 - Every collection endpoint uses cursor pagination from the first contract version.
 - Events are recorded for mutations once service/storage behavior is implemented, but activity read UI/API remains outside this phase unless explicitly approved.
 
+## Resolved user decisions for this phase
+
+- Token renewal endpoint name: `refresh`.
+- Token/session TTL: 2 hours.
+- No separate long-lived refresh token in the BE full MVP; refresh renews only a currently valid token/session.
+- Configured single-user ID is a UUID; service APIs use a project alias type for user IDs.
+- API stubs use fixed UUID values.
+- Event persistence is deferred until CRUD behavior is stable and is not part of the first BE full MVP points.
+
 ## Open questions requiring user input
 
-1. Exact auth endpoint names and token lifecycle names: `login`, `logout`, `me`, and `reauth` versus `refresh`.
-2. Token shape and lifetime defaults: access-token TTL, refresh-token TTL if refresh/reauth uses a second token, and whether renewal rotates tokens.
-3. Configured single-user identity shape: whether the env-configured user has a stable UUID from env or the backend derives a deterministic single-user ID.
-4. Whether public successful stubs should use fixed example UUIDs or generated UUIDv7 values.
-5. Whether Phase 1 should include event writes for all mutations immediately or defer event persistence until after core CRUD behavior is stable within the same phase.
+No blocking questions for point 1. Later points may need exact token cookie names and production cookie domain policy.
 
 ## API contract changes
 
@@ -48,7 +53,7 @@ Expected groups:
   - `POST /v1/auth/login`;
   - `POST /v1/auth/logout`;
   - `GET /v1/auth/me`;
-  - token renewal endpoint, exact name pending user decision.
+  - `POST /v1/auth/refresh`;
 - user API:
   - Flow endpoints over root Focuses;
   - Focus CRUD and hierarchy endpoints;
@@ -118,9 +123,9 @@ Converter/builder style:
 
 ### 1. Backend models only, no logic
 
-- [ ] **Goal:** define the model shapes for API support, internal/core behavior, and PostgreSQL storage without implementing behavior.
+- [x] **Goal:** define the model shapes for API support, internal/core behavior, and PostgreSQL storage without implementing behavior.
 - **Files/packages expected to change:** `contracts/openapi.yaml`; generated API files; `backend/internal/model/` or similarly named internal model packages; PostgreSQL-local model files under `backend/internal/storage/postgres/`; model tests where useful for zero-value/compile-time shape checks.
-- **Commands/checks:** `npm run contract:lint`; `npm run generate`; `npm run check:generated` after generated files are tracked; `npm run check:backend`.
+- **Commands/checks:** `go tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml`; `go fmt ./...`; `go test ./...`; `go vet ./...`; `go tool staticcheck ./...`; `go build -o .tmp/check-backend/api ./cmd/api`.
 - **Acceptance criteria:** models compile; dependency direction is correct; no validation, persistence, auth, status transition, hierarchy, or handler behavior is implemented in this point; API/core/storage models are visibly separate.
 
 ### 2. Converters/builders
@@ -183,3 +188,13 @@ Converter/builder style:
 - Never repair generated drift by hand-editing generated files.
 - Database rollback uses goose Down only after reviewing data loss and compatibility.
 - If Docker/npm registry access is blocked by local network or antivirus configuration, record the blocker and do not add repository certificate workarounds.
+
+## Point 1 completion notes
+
+- Added OpenAPI component schemas for the generic backend MVP models without adding CRUD/auth paths beyond the existing health endpoint.
+- Added internal/core model definitions under `backend/internal/model/`.
+- Added PostgreSQL-local row model definitions under `backend/internal/storage/postgres/` with `db` tags.
+- Added lightweight compile/tag tests for model shape checks.
+- No converters, API stubs, auth service, service layer, migrations, SQL queries, or persistence logic were added in point 1.
+- Validation run: `go tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml`, `go test ./...`, `go vet ./...`, `go tool staticcheck ./...`, and `go build -o .tmp/check-backend/api.exe ./cmd/api` from `backend/`.
+- Frontend TypeScript generation was not run in this backend-only point because backend validation must use native Go commands, not npm wrappers. Run frontend/contract generation at the next contract/frontend sync checkpoint.

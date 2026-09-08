@@ -281,3 +281,17 @@ The backend config/auth setup converts the plaintext password into an in-memory 
 Auth verification must sit behind an abstraction so a later implementation can replace the single env-configured user with database-backed passwords, Google login, or another provider.
 
 ---
+
+## D-029 - BE full MVP auth decisions
+
+**Decision:** On 2026-09-08 the user selected `refresh` as the token renewal endpoint name.
+
+Use a 2-hour token/session TTL for the BE full MVP. Do not introduce a separate long-lived refresh token yet. The refresh endpoint renews token state only for a currently valid session/token. Persistent login and refresh-token rotation are deferred until there is a concrete product need.
+
+Represent the single configured user ID as a UUID. Backend services should use a project alias type for user IDs instead of passing raw UUIDs directly through service APIs.
+
+API stubs use fixed UUID values for deterministic tests and review.
+
+Event persistence is deferred until CRUD behavior is stable; it is not part of the first BE full MVP points.
+
+---

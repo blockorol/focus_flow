@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: FocusFlow API
-  version: 0.0.0
-  description: Repository foundation contract. Domain operations are added in later phases.
+  version: 0.1.0
+  description: FocusFlow contract. Domain endpoint schemas are introduced contract-first before handlers.
   license:
     name: Apache-2.0
     url: https://www.apache.org/licenses/LICENSE-2.0
@@ -31,6 +31,14 @@ paths:
                 status: ok
 components:
   schemas:
+    UUID:
+      type: string
+      format: uuid
+
+    Timestamp:
+      type: string
+      format: date-time
+
     HealthResponse:
       type: object
       additionalProperties: false
@@ -39,3 +47,328 @@ components:
         status:
           type: string
           enum: [ok]
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          minLength: 1
+        requestId:
+          type: string
+          nullable: true
+
+    PageInfo:
+      type: object
+      additionalProperties: false
+      required: [count, nextCursor, hasMore]
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        nextCursor:
+          type: string
+          nullable: true
+        hasMore:
+          type: boolean
+
+    FocusStatus:
+      type: string
+      enum:
+        - idea
+        - planned
+        - active
+        - paused
+        - waiting
+        - done
+        - cancelled
+
+    GoalType:
+      type: string
+      enum:
+        - primary
+        - secondary
+
+    User:
+      type: object
+      additionalProperties: false
+      required: [id, username]
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        username:
+          type: string
+          minLength: 1
+
+    AuthSession:
+      type: object
+      additionalProperties: false
+      required: [user, expiresAt]
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        expiresAt:
+          $ref: '#/components/schemas/Timestamp'
+
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+
+    AuthResponse:
+      type: object
+      additionalProperties: false
+      required: [session]
+      properties:
+        session:
+          $ref: '#/components/schemas/AuthSession'
+
+    Focus:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - parentId
+        - name
+        - status
+        - tags
+        - description
+        - feedback
+        - color
+        - createdAt
+        - updatedAt
+        - finishedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        parentId:
+          allOf:
+            - $ref: '#/components/schemas/UUID'
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+        status:
+          $ref: '#/components/schemas/FocusStatus'
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+        description:
+          type: string
+          nullable: true
+        feedback:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        updatedAt:
+          $ref: '#/components/schemas/Timestamp'
+        finishedAt:
+          allOf:
+            - $ref: '#/components/schemas/Timestamp'
+          nullable: true
+
+    CreateFocusRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        parentId:
+          allOf:
+            - $ref: '#/components/schemas/UUID'
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+        status:
+          $ref: '#/components/schemas/FocusStatus'
+        tags:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+          nullable: true
+        feedback:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+
+    UpdateFocusRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        parentId:
+          allOf:
+            - $ref: '#/components/schemas/UUID'
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+        status:
+          $ref: '#/components/schemas/FocusStatus'
+        tags:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+          nullable: true
+        feedback:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+
+    FocusPage:
+      type: object
+      additionalProperties: false
+      required: [items, count, nextCursor, hasMore]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Focus'
+        count:
+          type: integer
+          minimum: 0
+        nextCursor:
+          type: string
+          nullable: true
+        hasMore:
+          type: boolean
+
+    GoalProgress:
+      type: object
+      additionalProperties: false
+      required: [linkedCount, terminalCount, doneCount]
+      properties:
+        linkedCount:
+          type: integer
+          minimum: 0
+        terminalCount:
+          type: integer
+          minimum: 0
+        doneCount:
+          type: integer
+          minimum: 0
+        statusCounts:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+
+    Goal:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - focusObjectId
+        - type
+        - description
+        - statusOverride
+        - progress
+        - createdAt
+        - updatedAt
+        - finishedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        focusObjectId:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/GoalType'
+        description:
+          type: string
+          minLength: 1
+        statusOverride:
+          allOf:
+            - $ref: '#/components/schemas/FocusStatus'
+          nullable: true
+        progress:
+          $ref: '#/components/schemas/GoalProgress'
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        updatedAt:
+          $ref: '#/components/schemas/Timestamp'
+        finishedAt:
+          allOf:
+            - $ref: '#/components/schemas/Timestamp'
+          nullable: true
+
+    CreateGoalRequest:
+      type: object
+      additionalProperties: false
+      required: [type, description]
+      properties:
+        type:
+          $ref: '#/components/schemas/GoalType'
+        description:
+          type: string
+          minLength: 1
+        statusOverride:
+          allOf:
+            - $ref: '#/components/schemas/FocusStatus'
+          nullable: true
+
+    UpdateGoalRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        type:
+          $ref: '#/components/schemas/GoalType'
+        description:
+          type: string
+          minLength: 1
+        statusOverride:
+          allOf:
+            - $ref: '#/components/schemas/FocusStatus'
+          nullable: true
+
+    GoalPage:
+      type: object
+      additionalProperties: false
+      required: [items, count, nextCursor, hasMore]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Goal'
+        count:
+          type: integer
+          minimum: 0
+        nextCursor:
+          type: string
+          nullable: true
+        hasMore:
+          type: boolean
+
+    LinkGoalFocusRequest:
+      type: object
+      additionalProperties: false
+      required: [focusObjectId]
+      properties:
+        focusObjectId:
+          $ref: '#/components/schemas/UUID'
