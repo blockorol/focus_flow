@@ -83,16 +83,16 @@ Both generated directories are versioned and never hand-edited. A root `generate
 | `PORT` | Compose explicitly sets `8080`; publish `127.0.0.1:8080:8080` | Honor Railway's injected port; listen on `0.0.0.0` inside the container |
 | `CORS_ALLOWED_ORIGINS` | Compose supplies exactly `http://localhost:3000` | Manually configured explicit frontend origin allowlist, no credentialed wildcard |
 | `COOKIE_SECURE` | Preserve Compose's `false` | Document `true` for production auth in Phase 1; no cookie is issued in Phase 0 |
-| `APP_USERNAME`, `APP_PASSWORD_HASH`, `APP_TOKEN_SECRET` | Reserved examples; use distinct local credentials when auth starts | Manually configured secrets; not validated/consumed by the Phase 0 HTTP server |
+| `APP_USERNAME`, `APP_PASSWORD`, `APP_TOKEN_SECRET` | Reserved examples; use distinct local credentials when auth starts | Manually configured secrets; not validated/consumed by the Phase 0 HTTP server |
 | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8080` in `frontend/.env.local`, copied from its example | Manually set to HTTPS backend origin in Vercel; public build-time configuration |
 
 Fail clearly on missing/malformed required runtime configuration, invalid ports/origins, or an unreachable database. Use a bounded startup connection timeout (proposed 10 seconds), then close the pgx pool on shutdown. Do not log connection strings or secrets. Preserve provider connection/TLS parameters; do not silently weaken TLS or assume the Railway public endpoint uses the same settings as private networking.
 
-`backend/.env.example` and `frontend/.env.example` contain placeholders only. Ensure Compose preserves literal `$` characters in Argon2id hashes; quote sample dotenv values appropriately and test this with a dummy value without printing secrets. Compose's explicit local environment takes precedence over the file. [Compose environment precedence](https://docs.docker.com/compose/how-tos/environment-variables/envvars-precedence/).
+`backend/.env.example` and `frontend/.env.example` contain placeholders only. Do not log plaintext passwords. Compose's explicit local environment takes precedence over the file. [Compose environment precedence](https://docs.docker.com/compose/how-tos/environment-variables/envvars-precedence/).
 
 ## Backend Docker and local Compose strategy
 
-- Build API, stdin password hash helper, and pinned goose CLI in a multi-stage `backend/Dockerfile`. Use a thin non-root runtime with CA certificates, `/app/bin/api`, `/app/bin/hash-password`, `/app/bin/goose`, `/app/bin/migrate`, and `/app/migrations/`. A small shell wrapper for goose requires a runtime shell; a slim Debian runtime is the proposed baseline. Add timezone data only if needed.
+- Build API and pinned goose CLI in a multi-stage `backend/Dockerfile`. Use a thin non-root runtime with CA certificates, `/app/bin/api`, `/app/bin/goose`, `/app/bin/migrate`, and `/app/migrations/`. A small shell wrapper for goose requires a runtime shell; a slim Debian runtime is the proposed baseline. Add timezone data only if needed.
 - Pin builder/runtime images and Go dependencies. Keep compilers, Node, and code generators out of the final runtime. Use `.dockerignore` to exclude local env files, caches, and build artifacts. Do not pass runtime secrets as build arguments.
 - Use exec-form `CMD` for the API, rather than a fixed API entrypoint that prevents Railway from overriding the command for pre-deploy. Respect SIGTERM with bounded HTTP shutdown.
 - Use host Go for generation, formatting, vetting, tests, and local builds. The deployment build stays self-contained under `backend/`, and local backend/PostgreSQL runtime starts through Docker Compose.
@@ -184,12 +184,12 @@ The steps below are the Phase 0 review slices. Checkboxes reflect the current im
 - **Commands/checks:** `go test ./...`; `go vet ./...`; `go build -o <ignored-temp-dir>/api ./cmd/api`; HTTP tests for the exact health schema, allowed/disallowed origins, credentialed preflight, and graceful shutdown.
 - **Acceptance:** health returns the generated typed response; server binds the configured port after successful database startup; startup failure exits nonzero; CORS supports localhost:3000 without wildcard credentials; no business logic resides in handlers.
 
-### 8. Add the stdin password hash utility
+### 8. Record authentication configuration direction
 
-- [x] **Goal:** make the documented secret-bootstrap helper real without adding authentication endpoints.
-- **Files/packages:** `backend/cmd/hash-password/` and narrowly scoped hashing implementation/tests; dependency pins; root/Make command aliases.
-- **Commands/checks:** focused Go tests for Argon2id encoding, random salt, verification, empty input, and stdin line endings; `go build -o <ignored-temp-dir>/hash-password ./cmd/hash-password`; a dummy stdin smoke check.
-- **Acceptance:** reads password only from stdin, writes an encoded Argon2id hash, never requires a plaintext CLI argument; no insecure default password or token secret. Document compatible parameters for Phase 1; do not implement sessions here.
+- [x] **Goal:** document the authentication configuration direction without implementing auth endpoints.
+- **Files/packages:** `backend/.env.example`, `docs/DECISIONS.md`, `README.md`.
+- **Commands/checks:** documentation review; secret scanning by inspection.
+- **Acceptance:** configured-user auth will use `APP_USERNAME`, `APP_PASSWORD`, and `APP_TOKEN_SECRET`; plaintext password values are never committed or logged; real auth implementation remains in BE full MVP.
 
 ### 9. Package the backend and goose runtime
 

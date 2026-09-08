@@ -491,29 +491,26 @@ Configuration:
 
 ```text
 APP_USERNAME
-APP_PASSWORD_HASH
+APP_PASSWORD
 APP_TOKEN_SECRET
 ```
 
-`APP_PASSWORD_HASH` uses Argon2id.
+`APP_PASSWORD` stores the configured plaintext password in the runtime environment. Configuration loading converts it into an in-memory credential/hash representation and must never log it.
 
-Provide:
-
-```text
-backend/cmd/hash-password
-```
-
-The command reads a password from stdin and prints an encoded Argon2id hash.
+The auth verifier must be an abstraction so the configured-user implementation can later be replaced by database-backed passwords, Google login, or another provider.
 
 Do not require plaintext passwords as command-line arguments.
 
-Initial endpoints:
+Initial public auth endpoints:
 
 ```text
 POST /v1/auth/login
 POST /v1/auth/logout
 GET  /v1/auth/me
+POST /v1/auth/reauth
 ```
+
+The exact renewal endpoint name may be changed during the BE full MVP OpenAPI design if `refresh` is selected instead of `reauth`.
 
 Successful login issues a signed token transported in an HttpOnly cookie.
 
@@ -734,48 +731,26 @@ CI may and should use a disposable PostgreSQL service/container for integration 
 
 ## 20. Implementation phases
 
-### Phase 0 - Repository foundation
+The old Phase 0 through Phase 8 roadmap is superseded as of 2026-09-08 and kept in `docs/IMPLEMENTATION_PLAN.md` as OLD history.
 
-Create the repository skeleton and development/deployment foundation.
+Current implementation proceeds by large product phases and first-level implementation points inside each phase.
 
-### Phase 1 - Core backend
+### Active next phase - BE full MVP
 
-Implement authentication, Focus, Goal, Goal links, Specification infrastructure, Events, persistence, services, REST API, hierarchy protection, pagination, and tests.
+Implement the complete generic backend MVP before real frontend product UI work.
 
-No domain Specification type yet.
+First-level points:
 
-### Phase 2 - Generic UI
+1. models only, without logic;
+2. converters/builders;
+3. all API methods as successful stubs, without logic;
+4. auth service and middleware;
+5. service layer without database persistence;
+6. PostgreSQL storage implementation with goose migrations.
 
-Implement login, application shell, Flow list/cards, and create Flow.
-
-### Phase 3 - Focus page
-
-Implement Focus details, breadcrumbs/hierarchy, children, Goals, and the base area where typed Specification blocks will later render.
-
-### Phase 4 - Editing
-
-Implement generic editing for Focus, hierarchy, tags, status, description, feedback, color, Goals, and Goal links.
-
-### Phase 5 - First Specification
-
-Define and implement the first domain Specification for job-search/job-position tracking.
-
-The exact contract is designed at the start of this phase.
-
-### Phase 6 - Activity
-
-Expose stored events through a typed read API and build Activity UI.
-
-### Phase 7 - Observability
-
-Add structured logs, request IDs, latency/error visibility, DB timing, and then OpenTelemetry where useful.
-
-### Phase 8 - MCP
-
-Add an MCP adapter over the existing application services.
+Each point is independently reviewable and should be validated with tests before moving to the next point.
 
 ---
-
 ## 21. Explicitly out of scope
 
 Do not implement without explicit approval:

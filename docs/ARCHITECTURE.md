@@ -54,31 +54,31 @@ High-level target:
 
 ```text
 /
-├── AGENTS.md
-├── SCOPE.md
-├── README.md
-├── contracts/
-│   └── openapi.yaml
-├── backend/
-│   ├── cmd/
-│   │   ├── api/
-│   │   └── hash-password/
-│   ├── internal/
-│   │   ├── api/
-│   │   ├── model/
-│   │   ├── service/
-│   │   ├── storage/
-│   │   │   └── postgres/
-│   │   └── specification/
-│   ├── migrations/
-│   └── Dockerfile
-├── frontend/
-└── docs/
-    ├── ARCHITECTURE.md
-    ├── IMPLEMENTATION_PLAN.md
-    ├── STATUS.md
-    ├── DECISIONS.md
-    └── exec-plans/
+|-- AGENTS.md
+|-- SCOPE.md
+|-- README.md
+|-- contracts/
+|   `-- openapi.yaml
+|-- backend/
+|   |-- cmd/
+|   |   `-- api/
+|   |-- internal/
+|   |   |-- api/
+|   |   |-- auth/
+|   |   |-- model/
+|   |   |-- service/
+|   |   |-- storage/
+|   |   |   `-- postgres/
+|   |   `-- specification/
+|   |-- migrations/
+|   `-- Dockerfile
+|-- frontend/
+`-- docs/
+    |-- ARCHITECTURE.md
+    |-- IMPLEMENTATION_PLAN.md
+    |-- STATUS.md
+    |-- DECISIONS.md
+    `-- exec-plans/
 ```
 
 The exact package split can evolve when the code makes a better boundary obvious.
@@ -176,9 +176,9 @@ Expected pattern:
 
 ```text
 generated API model
-      ↓
+      v
 core/internal model
-      ↓
+      v
 PostgreSQL row/storage model
 ```
 
@@ -244,11 +244,11 @@ For each Specification variant:
 
 ```text
 OpenAPI typed model
-        ↓
+        v
 typed internal specification model
-        ↓
+        v
 validation/business behavior
-        ↓
+        v
 JSONB storage mapping
 ```
 
@@ -274,15 +274,15 @@ Typical workflow:
 
 ```text
 edit OpenAPI
-    ↓
+    v
 generate Go
-    ↓
+    v
 generate TypeScript
-    ↓
+    v
 implement mappings/business behavior
-    ↓
+    v
 tests
-    ↓
+    v
 CI regenerates and checks for diff
 ```
 
@@ -312,9 +312,9 @@ Production:
 
 ```text
 Railway build
-   ↓
+   v
 goose up (pre-deploy)
-   ↓
+   v
 new backend deployment
 ```
 
@@ -328,9 +328,11 @@ A human explicitly runs `goose down`/`down-to` when a database rollback is requi
 
 The application uses username/password login backed by environment configuration.
 
-Password is stored as Argon2id hash.
+The runtime environment stores `APP_PASSWORD` for the single configured user. Configuration loading converts it into an in-memory credential/hash representation and must not log it.
 
-Backend issues a signed token in an HttpOnly cookie.
+Authentication is implemented behind a verifier/provider abstraction so the configured-user implementation can later be replaced by database-backed passwords, Google login, or another provider.
+
+Backend issues signed token state in HttpOnly cookies. User API middleware validates token state, extracts the userID, and stores it in request context using private typed context keys.
 
 Because production frontend and backend may initially live on different Vercel/Railway sites:
 
@@ -398,9 +400,8 @@ Tests must never target the production database.
 The dependency direction must allow:
 
 ```text
-HTTP ─┐
-      ├──> application services ──> storage
-MCP ──┘
+HTTP --> application services --> storage
+MCP  --> application services --> storage
 ```
 
 A future mobile client uses HTTP and does not change core business logic.

@@ -183,7 +183,7 @@ frontend/.env.example -> frontend/.env.local
 
 ```dotenv
 APP_USERNAME=local
-APP_PASSWORD_HASH=<argon2id hash>
+APP_PASSWORD=<local password>
 APP_TOKEN_SECRET=<local random secret>
 ```
 
@@ -203,15 +203,11 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 Do not put backend secrets into `NEXT_PUBLIC_*` variables.
 
-## Password hash helper
+## Password configuration
 
-Build or start the backend image first, then run:
+For the BE full MVP, local and production configuration use `APP_PASSWORD` for the single configured user. The backend must convert that value into an in-memory credential/hash representation during configuration/auth setup and must never log it.
 
-```bash
-npm run hash-password
-```
-
-The helper reads the password from stdin and prints an encoded Argon2id hash. Never pass plaintext passwords as command-line arguments and never commit plaintext passwords.
+Never pass plaintext passwords as command-line arguments and never commit `.env.local` files.
 
 ## Migrations
 
@@ -342,7 +338,7 @@ Manually configure application-owned backend variables:
 
 ```text
 APP_USERNAME
-APP_PASSWORD_HASH
+APP_PASSWORD
 APP_TOKEN_SECRET
 APP_ENV
 CORS_ALLOWED_ORIGINS

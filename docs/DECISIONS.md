@@ -166,17 +166,15 @@ All supported Specifications are represented in the OpenAPI contract.
 
 ---
 
-## D-016 — Authentication
+## D-016 - Authentication
 
 **Decision:** initial auth uses login/password from environment configuration.
 
 No users table.
 
-Password is stored as Argon2id hash.
+As superseded by D-028, the environment stores the configured plaintext password as `APP_PASSWORD`. Configuration loading converts it into an in-memory credential/hash representation and must never log it.
 
-Provide a stdin-based hash-generation helper.
-
-Backend issues a signed token; browser transport uses HttpOnly cookie.
+Backend issues signed token state; browser transport uses HttpOnly cookie.
 
 ---
 
@@ -265,3 +263,21 @@ Standard operating-system CA packages inside runtime images remain allowed for o
 The backend application still runs locally through `docker-compose.local.yml`, and production still builds from `backend/Dockerfile`. Docker Compose is the standard entry point for local backend/PostgreSQL runtime. Do not route normal Go commands through a Docker helper.
 
 Docker base images use explicit version tags such as `golang:1.26.8-bookworm`, not digest-pinned references, unless a later release/reproducibility policy explicitly changes this.
+
+## D-027 - Roadmap reset
+
+**Decision:** On 2026-09-08 the old Phase 0 through Phase 8 roadmap was superseded for execution planning. Keep it in `docs/IMPLEMENTATION_PLAN.md` as OLD history.
+
+The next active phase is `BE full MVP`. Implementation proceeds by first-level points inside that phase rather than by the old small product phases. Each point should be independently reviewable and tested before moving on.
+
+---
+
+## D-028 - Configured-user password handling
+
+**Decision:** On 2026-09-08 the user changed the configured-user password approach. Store the configured password directly in the runtime environment as `APP_PASSWORD`, not as `APP_PASSWORD_HASH`.
+
+The backend config/auth setup converts the plaintext password into an in-memory credential/hash representation after reading configuration. The plaintext password must not be logged, passed as a command-line argument, or persisted by the application.
+
+Auth verification must sit behind an abstraction so a later implementation can replace the single env-configured user with database-backed passwords, Google login, or another provider.
+
+---

@@ -21,11 +21,11 @@ Do not rely on remembered chat context when the repository documents can answer 
 
 If a user decision changes the design, update the appropriate repository document in the same change so the repository remains the source of truth.
 
-## Work phase by phase
+## Work by approved top-level points
 
-Do not implement the whole project at once.
+Do not implement the whole project at once. As of 2026-09-08, the old fine-grained phase roadmap is kept only as OLD history. Active work proceeds by approved first-level points inside the current large phase, starting with `BE full MVP`.
 
-Before starting each phase:
+Before starting each large phase or first-level implementation point:
 
 1. Re-read `SCOPE.md`.
 2. Re-read `docs/ARCHITECTURE.md`.
@@ -33,10 +33,10 @@ Before starting each phase:
 4. Re-read `docs/DECISIONS.md`.
 5. Read the relevant section of `docs/IMPLEMENTATION_PLAN.md`.
 6. Inspect the current codebase instead of assuming prior implementation details.
-7. Create or update `docs/exec-plans/phase-N-<name>.md`.
-8. Break the phase into the smallest coherent implementation steps.
-9. Present the phase plan to the user and ask only questions that materially affect the contract, schema, architecture, deployment, or product behavior.
-10. Wait for user approval before starting a new phase.
+7. Create or update the relevant `docs/exec-plans/phase-N-<name>.md`.
+8. Break the active point into the smallest coherent implementation steps.
+9. Present the point/phase plan to the user and ask only questions that materially affect the contract, schema, architecture, deployment, or product behavior.
+10. Wait for user approval before starting a new large phase or first-level point.
 
 Do not ask questions that can be answered from the repository.
 
@@ -58,7 +58,7 @@ Every phase execution plan must contain:
 
 Prefer small steps that can be reviewed independently.
 
-Do not mix work from a later phase into the current phase unless the user explicitly approves it.
+Do not mix work from a later point into the current point unless the user explicitly approves it.
 
 ## During implementation
 
@@ -72,17 +72,17 @@ After each coherent step:
 
 If implementation reveals that the current design is wrong or incomplete, stop before changing a public contract or persistence model and ask the user.
 
-## Between phases
+## Between points or phases
 
-At the end of every phase:
+At the end of every approved first-level point or large phase:
 
 1. Run all phase acceptance checks.
 2. Update `docs/STATUS.md`.
 3. Move unresolved issues into the next phase plan or `docs/STATUS.md`.
 4. Update README instructions if running, configuration, or deployment changed.
-5. Re-read the source-of-truth documents before proposing the next phase.
-6. Present a concise phase summary.
-7. Ask for approval before beginning the next phase.
+5. Re-read the source-of-truth documents before proposing the next point or phase.
+6. Present a concise summary.
+7. Ask for approval before beginning the next point or phase.
 
 This is intentionally designed so Codex does not need to keep the entire project history in conversational context.
 

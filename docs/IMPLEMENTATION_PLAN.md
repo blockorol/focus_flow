@@ -1,56 +1,207 @@
-# FocusFlow — Implementation Plan
+# FocusFlow - Implementation Plan
 
-This document defines phase boundaries and how Codex must execute them.
+This document defines the current execution model and keeps the old phase plan for history.
 
-It is not the detailed plan for any individual phase.
-
-Before implementing a phase, Codex creates a small-step execution plan under:
+Detailed implementation plans live under:
 
 ```text
 docs/exec-plans/
 ```
 
-Example:
+Codex must not start implementation for a new top-level point until the user has approved the plan for that point or phase.
+
+---
+
+# Current execution model
+
+The previous fine-grained phase roadmap did not match the desired working style. From 2026-09-08 onward, implementation proceeds by first-level points inside a larger product phase.
+
+The immediate next phase is:
 
 ```text
-docs/exec-plans/phase-0-foundation.md
+BE full MVP
 ```
 
-Codex must not begin a new phase until the user approves that phase plan.
+Work inside this phase is implemented point by point. Example: implement backend models without logic, stop for review/commit, then move to converters/builders, then API stubs, and so on.
+
+Each first-level point should be independently reviewable and should have its own status in the active execution plan. Tests are expected at every point where behavior or mapping can be verified.
 
 ---
 
-# Phase workflow
-
-For every phase:
-
-1. Re-read `SCOPE.md`.
-2. Re-read `docs/ARCHITECTURE.md`.
-3. Re-read `docs/STATUS.md`.
-4. Re-read `docs/DECISIONS.md`.
-5. Inspect the actual repository state.
-6. Create/update the phase execution plan.
-7. Break implementation into minimal coherent steps.
-8. List unresolved product/architecture questions.
-9. Ask the user only the questions that materially affect the phase.
-10. Get approval.
-11. Implement one step at a time.
-12. Validate each step.
-13. Keep the phase plan checkboxes current.
-14. Update `docs/STATUS.md` as facts change.
-15. Complete phase acceptance checks.
-16. Summarize the phase to the user.
-17. Do not proceed to the next phase without approval.
-
----
-
-# Phase 0 — Repository foundation
+# Active phase: BE full MVP
 
 ## Goal
 
+Implement the complete backend MVP foundation for the generic FocusFlow domain before building the real frontend product UI and before adding job-search-specific Specifications.
+
+## First-level implementation points
+
+1. Backend models only, without business logic.
+2. Converters/builders between API, internal, and PostgreSQL storage models.
+3. Complete API methods as successful stubs/mocks, without business logic.
+4. Authentication service and middleware.
+5. Service layer for all API methods, still without database persistence.
+6. PostgreSQL storage implementation with goose migrations.
+
+## Execution rule
+
+Do not implement the whole phase in one pass. Start with point 1 only after the user approves `docs/exec-plans/phase-1-be-full-mvp.md`.
+
+After each point:
+
+- run relevant checks;
+- update the active execution plan;
+- update `docs/STATUS.md`;
+- record new decisions in `docs/DECISIONS.md`;
+- report the result to the user and pause for a commit/review checkpoint when appropriate.
+
+## Backend scope for this phase
+
+The BE full MVP covers the generic backend domain:
+
+- public auth API;
+- user API protected by token middleware;
+- Focus;
+- Flow as root Focus API abstraction;
+- Focus hierarchy;
+- Goal;
+- Goal-to-Focus links;
+- generic Specification persistence infrastructure, but no job-search-specific public Specification variant yet;
+- event writes for mutations where the design is ready;
+- cursor pagination for every collection endpoint;
+- PostgreSQL storage through interfaces;
+- goose migrations with Up and Down.
+
+## Backend non-goals for this phase
+
+- real frontend product UI;
+- job-search-specific Specification fields or UI;
+- MCP;
+- Redis, queues, Kafka, Kubernetes, microservices, GraphQL, event sourcing, CQRS, or other infrastructure outside the agreed scope;
+- weakly typed public Specification CRUD just to expose JSONB early.
+
+---
+
+# BE full MVP point details
+
+## 1. Models only, no logic
+
+Create explicit backend model packages without behavior:
+
+- internal/core models as the source for business services;
+- API-facing handwritten request/response support models where needed around generated OpenAPI models;
+- PostgreSQL storage row/input models local to the PostgreSQL implementation.
+
+Rules:
+
+- internal models must not import API or PostgreSQL packages;
+- API mapping code may know internal models;
+- storage implementation may know internal models;
+- storage-specific models belong inside the PostgreSQL implementation unless there is a proven shared need;
+- no validation, status transitions, hierarchy checks, database queries, or auth logic in this point.
+
+## 2. Converters/builders
+
+Add conversion functions between layers after models exist.
+
+Rules:
+
+- keep conversion functions explicit and boring;
+- prefer small package-local functions or focused mapper packages near the boundary they serve;
+- return errors when a conversion can fail;
+- avoid reflection, magic generic mappers, global registries, or shared `util` packages;
+- tests cover representative conversions, nil/optional fields, enums, timestamps, pagination cursors, and error cases.
+
+Go style references for implementation decisions:
+
+- `context.Context` is passed explicitly as the first argument to request-aware functions and is not stored in structs;
+- context values are only for request-scoped data crossing APIs;
+- context keys should use private project-defined types, not built-in string keys;
+- package names should be meaningful and should not become catch-all `util`, `common`, or `types` dumping grounds.
+
+References:
+
+- https://pkg.go.dev/context
+- https://go.dev/blog/context-and-structs
+- https://go.googlesource.com/wiki/+/3c9c9e1adea9cc62389ba8adab07986c00060fe8/CodeReviewComments.md
+
+## 3. API methods as successful stubs only
+
+Define the complete backend OpenAPI contract for the generic MVP and wire handlers as successful mocks/stubs.
+
+Split HTTP API into:
+
+- public API: authentication/session endpoints;
+- user API: all authenticated application endpoints.
+
+Rules:
+
+- no business logic in handlers;
+- no database access;
+- no real mutation behavior;
+- user API middleware validates a token, extracts `userID`, and stores it in request context using a typed/private context key;
+- handlers read `userID` from context through typed helper functions;
+- every collection endpoint uses cursor pagination in the contract from the first stub;
+- stubs return structurally valid successful responses so generated frontend clients can be exercised.
+
+Public auth endpoints should include login, logout, current session/me, and token renewal. The exact endpoint names and token lifecycle must be decided in the OpenAPI design before implementation.
+
+## 4. Auth service and middleware
+
+Implement authentication as a real service, still designed for one configured user in v1.
+
+Rules:
+
+- environment contains the plaintext configured password, not a precomputed hash;
+- configuration loading converts the plaintext password into an in-memory hash/credential representation and must not log the plaintext;
+- expose an auth verifier abstraction so the configured-user implementation can later be replaced by database-backed passwords, Google login, or another provider;
+- token signing and validation use secrets from environment configuration;
+- middleware validates access tokens and places `userID` into request context;
+- public auth supports login, logout, current session/me, token renewal, wrong username/password handling, expired-token handling, and invalid-token handling;
+- tests cover success, failure, expiry, malformed tokens, middleware context propagation, and no secret leakage in logs/errors.
+
+## 5. Service layer without database persistence
+
+Create application services for all API methods.
+
+Rules:
+
+- services use internal models only;
+- services expose methods that match use cases, not generic CRUD for every table;
+- services receive storage interfaces but may use in-memory/mock implementations during this point;
+- add comments at each intended storage interaction explaining what data is needed and why;
+- do not put business logic in HTTP handlers;
+- if several services are useful, split by actual behavior, not by table name alone.
+
+## 6. PostgreSQL storage implementation
+
+Add the real PostgreSQL implementation behind the service storage interfaces.
+
+Rules:
+
+- schema changes use goose migrations in `backend/migrations/`;
+- every migration has Up and Down;
+- use PostgreSQL 17;
+- use pgx;
+- PostgreSQL row/input structs stay local to the PostgreSQL implementation;
+- use struct tags for PostgreSQL scanning/mapping where the chosen pgx approach supports them;
+- storage interfaces return internal models only;
+- business rules remain in services;
+- integration tests use disposable Docker/CI PostgreSQL, never production.
+
+---
+
+# OLD roadmap - kept for history
+
+The following roadmap is superseded as of 2026-09-08. It remains here to preserve planning history.
+
+## OLD Phase 0 - Repository foundation
+
+### Goal
+
 Create a working monorepo foundation with reproducible code generation, local backend-and-PostgreSQL-in-Docker development, direct Node.js frontend development, CI, and deployment documentation.
 
-## Includes
+### Includes
 
 - repository layout;
 - Go module;
@@ -65,33 +216,27 @@ Create a working monorepo foundation with reproducible code generation, local ba
 - GitHub Actions;
 - README;
 - goose tooling/bootstrap;
-- password hash helper skeleton or implementation if required for auth bootstrap.
+- password helper skeleton or implementation if required for auth bootstrap.
 
-## Important local constraint
-
-Do not install PostgreSQL directly on the host. As clarified by the user on 2026-09-05, local Compose contains the backend and PostgreSQL 17. A separate test Compose project provides disposable PostgreSQL, isolated from development data. Railway remains the production database.
-
-## Acceptance criteria
+### Acceptance criteria
 
 - repository builds;
 - frontend starts directly with Node.js;
 - backend Docker image builds;
-- backend can start from `docker-compose.local.yml` when a valid remote DB URL and auth secrets are supplied;
+- backend can start from `docker-compose.local.yml` with PostgreSQL in Docker;
 - OpenAPI generation runs;
 - generated files are committed;
 - CI detects generated-code drift;
 - README accurately explains local setup and deployment;
-- PostgreSQL runs in Docker without a host installation; integration tests use isolated disposable data.
+- integration tests use isolated disposable data.
 
----
+## OLD Phase 1 - Core backend
 
-# Phase 1 — Core backend
-
-## Goal
+### Goal
 
 Implement the generic backend domain before any job-search-specific behavior.
 
-## Includes
+### Includes
 
 - configuration;
 - auth;
@@ -112,13 +257,7 @@ Implement the generic backend domain before any job-search-specific behavior.
 - tests;
 - event writes.
 
-## Specification limitation
-
-Do not expose a weakly typed public Specification payload just because the storage table exists.
-
-The first concrete public Specification API arrives with the first typed Specification variant.
-
-## Acceptance criteria
+### Acceptance criteria
 
 - core API behavior is contract-first;
 - schema is created through goose;
@@ -130,15 +269,13 @@ The first concrete public Specification API arrives with the first typed Specifi
 - persistence integration tests run against disposable PostgreSQL in CI;
 - backend Docker build succeeds.
 
----
+## OLD Phase 2 - Generic UI
 
-# Phase 2 — Generic UI
-
-## Goal
+### Goal
 
 Create the first usable product UI on top of the generic API.
 
-## Includes
+### Includes
 
 - login page;
 - authenticated app shell;
@@ -149,24 +286,13 @@ Create the first usable product UI on top of the generic API.
 - logout;
 - loading/error states.
 
-## Acceptance criteria
+## OLD Phase 3 - Focus page
 
-- frontend uses generated contract types/client;
-- no manually duplicated API DTOs;
-- login works against backend;
-- Flow list is paginated;
-- Flow creation works;
-- production build passes.
-
----
-
-# Phase 3 — Focus page
-
-## Goal
+### Goal
 
 Allow navigation through the Focus hierarchy.
 
-## Includes
+### Includes
 
 - Focus details;
 - parent path/breadcrumbs;
@@ -175,22 +301,13 @@ Allow navigation through the Focus hierarchy.
 - base layout for future Specification blocks;
 - navigation between hierarchy levels.
 
-## Acceptance criteria
+## OLD Phase 4 - Editing
 
-- arbitrary-depth hierarchy can be navigated;
-- children use pagination;
-- parents/breadcrumbs are represented by an API designed for that use case;
-- no job-specific behavior exists yet.
-
----
-
-# Phase 4 — Editing
-
-## Goal
+### Goal
 
 Make the generic system fully usable.
 
-## Includes
+### Includes
 
 - edit Focus fields;
 - status changes;
@@ -203,143 +320,24 @@ Make the generic system fully usable.
 - Goal-to-Focus links;
 - relevant validation and event writes.
 
-## Acceptance criteria
+## OLD Phase 5 - First typed Specification
 
-- all generic core data is editable;
-- invalid hierarchy changes are rejected;
-- event history is populated by mutations;
-- Goal derived/override behavior is covered by tests.
-
----
-
-# Phase 5 — First typed Specification
-
-## Goal
+### Goal
 
 Add the first real domain-specific capability: job-search/job-position tracking.
 
-## Required design step
+### Rule
 
-Before coding, define the exact data model with the user.
+Before coding, define the exact data model with the user. Do not infer fields from old discussions and silently implement them.
 
-Do not infer fields from old discussions and silently implement them.
-
-## Contract rule
-
-The Specification is a strongly typed OpenAPI variant.
-
-The same repository change must include:
-
-- OpenAPI variant;
-- generated Go changes;
-- generated TypeScript changes;
-- internal typed backend model;
-- validation;
-- JSONB mapping;
-- API handling;
-- frontend renderer;
-- frontend editor;
-- tests.
-
-## Acceptance criteria
-
-- no untyped Specification payload at the API boundary;
-- backend and frontend support the same version;
-- JSONB persistence round-trips through typed models;
-- UI renders the typed block.
-
----
-
-# Phase 6 — Activity
-
-## Goal
+## OLD Phase 6 - Activity
 
 Expose and display the event data accumulated by earlier phases.
 
-## Includes
+## OLD Phase 7 - Observability
 
-- typed activity response;
-- cursor pagination;
-- Activity UI;
-- useful event summaries.
+Make production behavior diagnosable without adding unnecessary infrastructure.
 
-## Acceptance criteria
-
-- activity is backed by existing event records;
-- API is paginated;
-- no event sourcing is introduced.
-
----
-
-# Phase 7 — Observability
-
-## Goal
-
-Make production behavior diagnosable without adding an unnecessary platform.
-
-## Includes
-
-Start with:
-
-- structured JSON logs;
-- request ID/correlation ID;
-- HTTP latency;
-- status/error logging;
-- database operation timing.
-
-Then evaluate OpenTelemetry.
-
-## Acceptance criteria
-
-- a failed production request can be traced through logs;
-- no unnecessary observability infrastructure is added.
-
----
-
-# Phase 8 — MCP
-
-## Goal
+## OLD Phase 8 - MCP
 
 Expose FocusFlow to an agent without duplicating domain logic.
-
-## Includes
-
-- separate MCP adapter/server;
-- read tools;
-- mutation tools;
-- same application services as HTTP;
-- same validation;
-- same event creation;
-- source marked as MCP.
-
-## Acceptance criteria
-
-- no MCP-specific duplicate business implementation;
-- MCP and HTTP produce equivalent domain behavior.
-
----
-
-# Execution-plan granularity
-
-A phase plan should not contain giant steps such as:
-
-```text
-Implement backend.
-```
-
-Prefer:
-
-```text
-1. Define initial OpenAPI schemas and error envelope.
-2. Generate server/client types and lock generation commands.
-3. Add configuration model and validation.
-4. Add first goose migration for Focus.
-5. Implement Focus core model and storage interface.
-6. Implement PostgreSQL Focus storage.
-7. Add Focus service rules.
-8. Add HTTP mappings/handlers.
-9. Add integration tests.
-...
-```
-
-Each step should be small enough that the user can review the direction before the next architectural decision is buried underneath more code.

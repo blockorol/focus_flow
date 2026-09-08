@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Phase 0 - Repository foundation. Approved on 2026-09-05; implementation in progress.
+Planning reset in progress. Phase 0 foundation work remains in the working tree, but execution planning has moved to the new BE full MVP phase as of 2026-09-08.
 
 ## Completed
 
@@ -30,6 +30,8 @@ Phase 0 - Repository foundation. Approved on 2026-09-05; implementation in progr
 - D-024: corrected local development topology: frontend on host Node.js, backend and PostgreSQL 17 in Docker Compose.
 - D-025: no repository certificate trust workaround.
 - D-026: host Go for Go tooling; Docker Compose for backend/PostgreSQL runtime; Docker image version tags without digest pins.
+- D-027: old phase roadmap superseded; new active phase is BE full MVP.
+- D-028: configured-user password is read from `APP_PASSWORD` and converted to an in-memory credential/hash representation by backend auth setup.
 
 ## Validation run locally
 
@@ -70,13 +72,8 @@ Blocked locally:
 - Hosted GitHub Actions has not been run or verified for this revision.
 - Railway and Vercel project settings have not been configured or verified.
 - The frontend package lock was adjusted after removing an accidental root file dependency, but the lockfile should be regenerated/validated with npm after TLS interception is fixed.
-- No Phase 1 application schema or Focus/Goal API implementation has started.
+- No BE full MVP implementation has started after the planning reset.
 
 ## Next action
 
-Finish Phase 0 verification after local npm registry access and Docker HTTPS trust are resolved:
-
-1. clear the local npm offline/network issue, then rerun root and frontend lockfile installs;
-2. rerun generated drift, backend, frontend, migration, Docker, and disposable database checks;
-3. update this status and the active execution plan with final evidence;
-4. ask for approval before starting Phase 1.
+Review and approve [the BE full MVP execution plan](exec-plans/phase-1-be-full-mvp.md). After approval, start only point 1: backend models without logic.
