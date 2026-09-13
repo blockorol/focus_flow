@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { AppAPIError, type CreateFocusInput, type Focus, type UpdateFocusInput } from '@/api';
+import { AppAPIError, type CreateFocusInput, type CreateGoalInput, type Focus, type UpdateFocusInput, type UpdateGoalInput } from '@/api';
 import { getBrowserAPI } from '@/api/browser';
 import { PageHeader } from '@/app-shell';
+import { GoalsPanel } from '@/goals';
 import { Button, EmptyState, ErrorState, LoadingState } from '@/ui';
 import { ChildFocusCard } from './child-focus-card';
 import { CreateChildFocusForm } from './create-child-focus-form';
@@ -26,6 +27,7 @@ export function FocusDashboard({ focusId }: FocusDashboardProps) {
     const api = getBrowserAPI();
     const nextFocus = await api.getFocus(focusId, { include: ['children', 'goals'], depth: 1 });
     setFocus(nextFocus);
+    return nextFocus;
   }, [focusId]);
 
   useEffect(() => {
@@ -70,9 +72,38 @@ export function FocusDashboard({ focusId }: FocusDashboardProps) {
   async function updateFocus(input: UpdateFocusInput) {
     const api = getBrowserAPI();
     const updated = await api.updateFocus(focusId, input);
-    const reloaded = await api.getFocus(focusId, { include: ['children', 'goals'], depth: 1 });
-    setFocus(reloaded);
+    const reloaded = await loadFocus();
     return { ...updated, children: reloaded.children, goals: reloaded.goals };
+  }
+
+  async function createGoal(input: CreateGoalInput) {
+    const api = getBrowserAPI();
+    await api.createGoal(focusId, input);
+    await loadFocus();
+  }
+
+  async function updateGoal(goalId: string, input: UpdateGoalInput) {
+    const api = getBrowserAPI();
+    await api.updateGoal(goalId, input);
+    await loadFocus();
+  }
+
+  async function deleteGoal(goalId: string) {
+    const api = getBrowserAPI();
+    await api.deleteGoal(goalId);
+    await loadFocus();
+  }
+
+  async function linkGoal(goalId: string, linkedFocusId: string) {
+    const api = getBrowserAPI();
+    await api.linkGoalFocus(goalId, { focusId: linkedFocusId });
+    await loadFocus();
+  }
+
+  async function unlinkGoal(goalId: string, linkedFocusId: string) {
+    const api = getBrowserAPI();
+    await api.unlinkGoalFocus(goalId, linkedFocusId);
+    await loadFocus();
   }
 
   return (
@@ -103,6 +134,7 @@ export function FocusDashboard({ focusId }: FocusDashboardProps) {
           <div className="grid content-start gap-5">
             <FocusEditForm key={focus.id} focus={focus} onSave={updateFocus} />
             <CreateChildFocusForm onCreate={createChild} />
+            <GoalsPanel focus={focus} goals={focus.goals} onCreate={createGoal} onSave={updateGoal} onDelete={deleteGoal} onLink={linkGoal} onUnlink={unlinkGoal} />
           </div>
 
           <section className="grid content-start gap-4">

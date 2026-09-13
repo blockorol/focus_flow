@@ -88,10 +88,11 @@ Blocked locally:
 - Phase 2 step 1.5 Flows UI is complete in the working tree.
 - Phase 2 step 1.6 Focus page UI is complete in the working tree.
 - Phase 2 step 1.7 Focus edit UI is complete in the working tree.
+- Phase 2 step 1.8 Goals UI is complete in the working tree.
 
 ## Next action
 
-Phase 2 steps 1.1 through 1.7 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.8: Goals UI. Do not start implementation until the user approves continuing.
+Phase 2 steps 1.1 through 1.8 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.9: Frontend visual polish. Do not start implementation until the user approves continuing.
 
 ## BE full MVP point 1 result
 
@@ -411,4 +412,32 @@ Validation:
 Not done in this step:
 
 - no Goal management UI;
+- no real backend integration.
+
+## Phase 2 step 1.8 result
+
+Completed:
+
+- Added Goal management UI on the Focus details page.
+- Supported creating Goals for a Focus.
+- Supported editing Goal type, description, and status override.
+- Supported clearing Goal status override back to derived mode through `clearFields`.
+- Supported deleting Goals.
+- Supported simple link/unlink actions between a Goal and direct child Focuses.
+- Displayed backend/mock-derived Goal progress, including linked count, done percentage, resolved percentage, and status counts.
+- Kept generated OpenAPI DTO usage isolated to the frontend API boundary; Goal UI uses frontend models.
+- Added Goal UI and request builder tests.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"`.
+- `git diff --check`.
+
+Not done in this step:
+
+- no frontend visual polish pass;
 - no real backend integration.
