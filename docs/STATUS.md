@@ -84,10 +84,11 @@ Blocked locally:
 - Phase 2 step 1.1 frontend design foundation is complete in the working tree.
 - Phase 2 step 1.2 API client boundary and mock mode is complete in the working tree.
 - Phase 2 step 1.3 auth UI mock-first is complete in the working tree.
+- Phase 2 step 1.4 app shell is complete in the working tree.
 
 ## Next action
 
-Phase 2 steps 1.1 through 1.3 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.4: App shell. Do not start implementation until the user approves continuing.
+Phase 2 steps 1.1 through 1.4 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.5: Flows UI. Do not start implementation until the user approves continuing.
 
 ## BE full MVP point 1 result
 
@@ -304,3 +305,24 @@ Not done in this step:
 - no full app shell beyond the protected preview;
 - no Flow, Focus, or Goal screens;
 - no real backend auth integration yet.
+## Phase 2 step 1.4 result
+
+Completed:
+
+- Added reusable app shell components for sidebar layout, navigation, and page headers.
+- Replaced the temporary protected home layout with `AppShell`.
+- Kept session/logout UI in the protected shell.
+- Added tests for navigation and shell primitives.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+
+Not done in this step:
+
+- no Flow cards backed by mock data;
+- no Focus or Goal screens;
+- no real backend integration.

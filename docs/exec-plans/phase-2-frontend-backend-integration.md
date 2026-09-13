@@ -1,6 +1,6 @@
 # Phase 2 - Frontend MVP, backend hardening, and integration
 
-Status: steps 1.1 through 1.3 complete and awaiting review on 2026-09-14.
+Status: steps 1.1 through 1.4 complete and awaiting review on 2026-09-14.
 
 ## Goal
 
@@ -76,7 +76,7 @@ If backend hardening reveals a persistence model issue, stop before changing the
 
 #### 1.4 App shell
 
-- [ ] **Goal:** create the main application layout.
+- [x] **Goal:** create the main application layout.
 - **Files/packages expected to change:** frontend layout/routes, sidebar components, navigation components, tests.
 - **Implementation notes:** add sidebar layout, main content area, basic navigation, user/session area, and minimal responsive behavior without complex mobile UI.
 - **Commands/checks:** render tests; frontend typecheck; manual browser layout check.
@@ -327,3 +327,22 @@ Notes:
 
 - Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
 - Manual browser clicking is still a review action for this checkpoint.
+## Step 1.4 completion notes
+
+- Added reusable app shell components under `frontend/src/app-shell/`: `AppShell`, `Sidebar`, `PageHeader`, navigation items, and active-route helper.
+- Replaced the temporary protected home layout with `AppShell` and `PageHeader` while keeping product data screens deferred.
+- Kept sidebar navigation stable for current and near-future sections; future-only items are visually disabled and marked `Soon`.
+- Kept session/logout display inside the protected shell.
+- Added app shell tests for navigation active-state logic, sidebar rendering, disabled future items, and page header actions.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+- Product Flow, Focus, and Goal screens remain deferred to the next frontend steps.
