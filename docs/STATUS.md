@@ -83,10 +83,11 @@ Blocked locally:
 - Phase 2 frontend/backend/integration plan is created in `docs/exec-plans/phase-2-frontend-backend-integration.md`.
 - Phase 2 step 1.1 frontend design foundation is complete in the working tree.
 - Phase 2 step 1.2 API client boundary and mock mode is complete in the working tree.
+- Phase 2 step 1.3 auth UI mock-first is complete in the working tree.
 
 ## Next action
 
-Phase 2 steps 1.1 and 1.2 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.3: Auth UI mock-first. Do not start implementation until the user approves continuing.
+Phase 2 steps 1.1 through 1.3 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.4: App shell. Do not start implementation until the user approves continuing.
 
 ## BE full MVP point 1 result
 
@@ -280,3 +281,26 @@ Not done in this step:
 - no session UI;
 - no protected app layout;
 - no Flow, Focus, or Goal screens.
+## Phase 2 step 1.3 result
+
+Completed:
+
+- Added mock-first auth state management with `AuthProvider` and `useAuth`.
+- Added `/login` with a sign-in form using shared UI primitives.
+- Added protected-route redirect behavior for the home preview.
+- Added session summary and logout behavior in the protected preview.
+- Added tests for mock auth behavior, redirect decisions, and login error messages.
+- Updated Vitest alias resolution for `@/*` imports.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+
+Not done in this step:
+
+- no full app shell beyond the protected preview;
+- no Flow, Focus, or Goal screens;
+- no real backend auth integration yet.

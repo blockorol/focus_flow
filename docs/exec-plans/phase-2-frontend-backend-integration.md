@@ -1,6 +1,6 @@
 # Phase 2 - Frontend MVP, backend hardening, and integration
 
-Status: steps 1.1 and 1.2 complete and awaiting review on 2026-09-13.
+Status: steps 1.1 through 1.3 complete and awaiting review on 2026-09-14.
 
 ## Goal
 
@@ -68,7 +68,7 @@ If backend hardening reveals a persistence model issue, stop before changing the
 
 #### 1.3 Auth UI mock-first
 
-- [ ] **Goal:** build the visible login/session/logout flow against mock mode.
+- [x] **Goal:** build the visible login/session/logout flow against mock mode.
 - **Files/packages expected to change:** frontend auth pages/components, session state, tests.
 - **Implementation notes:** add login page; fake successful login in mock mode; session state; logout; redirect unauthenticated users to login; protected layout.
 - **Commands/checks:** login happy-path test; logout test; protected redirect test; frontend typecheck; manual browser check.
@@ -306,3 +306,24 @@ Validation:
 Notes:
 
 - Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+## Step 1.3 completion notes
+
+- Added a browser API singleton so mock mode preserves one in-memory API instance during the client session.
+- Added `AuthProvider` and `useAuth` for frontend session state, login, logout, and refresh actions.
+- Added `/login` with a mock-first sign-in form using shared UI primitives.
+- Wrapped the home preview in `AuthGate` so unauthenticated users are redirected to `/login`.
+- Added a session summary and logout action to the protected preview.
+- Added pure auth routing and login-error helpers so redirect/error behavior can be tested without a browser test dependency.
+- Updated Vitest config to resolve the same `@/*` source alias used by TypeScript and Next.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+- Manual browser clicking is still a review action for this checkpoint.
