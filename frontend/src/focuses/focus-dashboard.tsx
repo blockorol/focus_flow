@@ -1,0 +1,123 @@
+'use client';
+
+import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
+import { AppAPIError, type CreateFocusInput, type Focus } from '@/api';
+import { getBrowserAPI } from '@/api/browser';
+import { PageHeader } from '@/app-shell';
+import { Button, EmptyState, ErrorState, LoadingState } from '@/ui';
+import { ChildFocusCard } from './child-focus-card';
+import { CreateChildFocusForm } from './create-child-focus-form';
+import { FocusSummary } from './focus-summary';
+
+type CreateChildFocusInput = Omit<CreateFocusInput, 'parentId'>;
+
+type FocusDashboardProps = {
+  focusId: string;
+};
+
+export function FocusDashboard({ focusId }: FocusDashboardProps) {
+  const [focus, setFocus] = useState<Focus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadFocus = useCallback(async () => {
+    const api = getBrowserAPI();
+    const nextFocus = await api.getFocus(focusId, { include: ['children', 'goals'], depth: 1 });
+    setFocus(nextFocus);
+  }, [focusId]);
+
+  useEffect(() => {
+    let active = true;
+    getBrowserAPI()
+      .getFocus(focusId, { include: ['children', 'goals'], depth: 1 })
+      .then((nextFocus) => {
+        if (!active) return;
+        setFocus(nextFocus);
+        setError(null);
+      })
+      .catch((cause: unknown) => {
+        if (!active) return;
+        setError(errorMessage(cause));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [focusId]);
+
+  async function retry() {
+    setLoading(true);
+    setError(null);
+    try {
+      await loadFocus();
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function createChild(input: CreateChildFocusInput) {
+    const api = getBrowserAPI();
+    await api.createFocus({ ...input, parentId: focusId });
+    await loadFocus();
+  }
+
+  return (
+    <div className="grid gap-6">
+      <PageHeader
+        eyebrow="Focus"
+        title={focus?.name ?? 'Focus details'}
+        description="View one Focus aggregate, its current fields, and direct child Focuses."
+        actions={
+          <Link className="text-sm font-medium text-action hover:text-action-hover" href="/">
+            Back to Flows
+          </Link>
+        }
+      />
+
+      {loading ? <LoadingState title="Loading Focus" description="Reading mock Focus details." /> : null}
+
+      {error ? (
+        <ErrorState title="Focus could not be loaded" description={error}>
+          <Button variant="secondary" size="sm" onClick={() => void retry()}>
+            Retry
+          </Button>
+        </ErrorState>
+      ) : null}
+
+      {!loading && !error && focus ? (
+        <div className="grid gap-5 xl:grid-cols-[minmax(280px,380px)_1fr]">
+          <CreateChildFocusForm onCreate={createChild} />
+
+          <section className="grid content-start gap-4">
+            <FocusSummary focus={focus} />
+
+            <div className="grid gap-3">
+              <h2 className="text-lg font-semibold tracking-tight text-text-primary">Child Focuses</h2>
+              {focus.children.length > 0 ? (
+                <div className="grid gap-4">
+                  {focus.children.map((child) => (
+                    <ChildFocusCard key={child.id} focus={child} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState title="No child Focuses yet" description="Create a child Focus to add the next layer of work." />
+              )}
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function errorMessage(cause: unknown) {
+  if (cause instanceof AppAPIError) return cause.message;
+  if (cause instanceof Error) return cause.message;
+  return 'The request failed.';
+}
+

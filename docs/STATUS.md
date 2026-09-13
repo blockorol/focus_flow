@@ -86,10 +86,11 @@ Blocked locally:
 - Phase 2 step 1.3 auth UI mock-first is complete in the working tree.
 - Phase 2 step 1.4 app shell is complete in the working tree.
 - Phase 2 step 1.5 Flows UI is complete in the working tree.
+- Phase 2 step 1.6 Focus page UI is complete in the working tree.
 
 ## Next action
 
-Phase 2 steps 1.1 through 1.5 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.6: Focus page UI. Do not start implementation until the user approves continuing.
+Phase 2 steps 1.1 through 1.6 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.7: Focus edit UI. Do not start implementation until the user approves continuing.
 
 ## BE full MVP point 1 result
 
@@ -352,6 +353,35 @@ Validation:
 Not done in this step:
 
 - no Focus details page;
+- no Focus edit behavior;
+- no Goal management UI;
+- no real backend integration.
+
+## Phase 2 step 1.6 result
+
+Completed:
+
+- Added `/focuses/[focusId]` as a protected Focus details route.
+- Added Focus details UI under `frontend/src/focuses/`.
+- Updated Flow cards to open their Focus aggregate page.
+- Displayed Focus status, tags, description, feedback, color marker, child Focus count, and Goal count.
+- Displayed direct child Focus cards with navigation to each child Focus.
+- Added child Focus creation against mock mode through the frontend API boundary.
+- Added loading, error, and empty child states for the Focus page.
+- Kept generated OpenAPI DTO usage isolated to the frontend API boundary; Focus UI uses frontend models.
+- Added Focus UI tests.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"`.
+- `git diff --check`.
+
+Not done in this step:
+
 - no Focus edit behavior;
 - no Goal management UI;
 - no real backend integration.

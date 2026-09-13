@@ -1,6 +1,6 @@
 # Phase 2 - Frontend MVP, backend hardening, and integration
 
-Status: steps 1.1 through 1.5 complete and awaiting review on 2026-09-14.
+Status: steps 1.1 through 1.6 complete and awaiting review on 2026-09-14.
 
 ## Goal
 
@@ -92,7 +92,7 @@ If backend hardening reveals a persistence model issue, stop before changing the
 
 #### 1.6 Focus page UI
 
-- [ ] **Goal:** display one Focus aggregate and its children.
+- [x] **Goal:** display one Focus aggregate and its children.
 - **Files/packages expected to change:** frontend Focus page/components/forms, mock client behavior, tests.
 - **Implementation notes:** add Focus details, breadcrumbs, child Focus cards/list, create child Focus form, and display status, tags, description, feedback, and color.
 - **Commands/checks:** Focus details render test; create child happy-path test; missing Focus state test; frontend typecheck; manual browser check.
@@ -374,3 +374,28 @@ Notes:
 
 - Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
 - Focus pages, Focus edit behavior, and Goal screens remain deferred to the next frontend steps.
+
+## Step 1.6 completion notes
+
+- Added `/focuses/[focusId]` as a protected Focus details route inside the app shell.
+- Added Focus UI components under `frontend/src/focuses/`: `FocusDashboard`, `FocusSummary`, `ChildFocusCard`, and `CreateChildFocusForm`.
+- Updated Flow cards so they navigate to the Focus aggregate page.
+- Loaded one Focus aggregate through the frontend API boundary with child Focuses and Goals included for display counts.
+- Added child Focus creation through the frontend API boundary using the current Focus as `parentId`, followed by a details reload.
+- Displayed Focus status, tags, description, feedback, color marker, child count, Goal count, loading state, error state, and empty child state.
+- Kept generated OpenAPI DTOs isolated to the frontend API boundary; Focus UI consumes frontend models only.
+- Added Focus summary, child card, and child creation form tests.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"` showed generated OpenAPI usage only in `frontend/src/api/mappers.ts` and `frontend/src/api/real.ts`.
+- `git diff --check`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+- Focus edit behavior and Goal management UI remain deferred to the next frontend steps.
