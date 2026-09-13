@@ -1,6 +1,6 @@
 # Phase 2 - Frontend MVP, backend hardening, and integration
 
-Status: steps 1.1 through 1.4 complete and awaiting review on 2026-09-14.
+Status: steps 1.1 through 1.5 complete and awaiting review on 2026-09-14.
 
 ## Goal
 
@@ -84,7 +84,7 @@ If backend hardening reveals a persistence model issue, stop before changing the
 
 #### 1.5 Flows UI
 
-- [ ] **Goal:** display and create root Focuses as Flows.
+- [x] **Goal:** display and create root Focuses as Flows.
 - **Files/packages expected to change:** frontend Flow components/pages/forms, mock client behavior, tests.
 - **Implementation notes:** add Flow list, Flow cards, create Flow form, empty state, basic loading/error/success states, and a simple `Load more` shape for cursor pagination.
 - **Commands/checks:** Flow render test; create Flow happy-path test; empty-state test; frontend typecheck; manual browser check.
@@ -266,6 +266,7 @@ If backend hardening reveals a persistence model issue, stop before changing the
 - Do not hand-edit generated files to repair drift.
 - Do not add repository certificate workarounds if Docker/npm network access fails.
 - Do not change database schema without a reviewed migration and explicit approval when the model changes.
+
 ## Step 1.1 completion notes
 
 - Added frontend functional design tokens in `frontend/src/app/globals.css` for app background, surfaces, borders, text, action, danger, warning, success, info, radius, and card shadow.
@@ -284,6 +285,7 @@ Validation:
 Notes:
 
 - Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+
 ## Step 1.2 completion notes
 
 - Added a typed frontend application API boundary under `frontend/src/api/` with separate frontend models and generated OpenAPI DTO usage isolated to the API boundary.
@@ -306,6 +308,7 @@ Validation:
 Notes:
 
 - Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+
 ## Step 1.3 completion notes
 
 - Added a browser API singleton so mock mode preserves one in-memory API instance during the client session.
@@ -327,6 +330,7 @@ Notes:
 
 - Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
 - Manual browser clicking is still a review action for this checkpoint.
+
 ## Step 1.4 completion notes
 
 - Added reusable app shell components under `frontend/src/app-shell/`: `AppShell`, `Sidebar`, `PageHeader`, navigation items, and active-route helper.
@@ -346,3 +350,27 @@ Notes:
 
 - Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
 - Product Flow, Focus, and Goal screens remain deferred to the next frontend steps.
+
+## Step 1.5 completion notes
+
+- Added Flow UI components under `frontend/src/flows/`: `FlowDashboard`, `FlowCard`, `CreateFlowForm`, and Flow status/date helpers.
+- Replaced the home placeholder with the mock-backed Flow dashboard inside the protected app shell.
+- Added mock Flow listing through the frontend API boundary with children/goals included for card counts.
+- Added successful create Flow behavior through the frontend API boundary, followed by a list refresh.
+- Added loading, error, empty, success, and `Load more` UI states for the Flow dashboard shape.
+- Kept generated OpenAPI DTOs isolated to the frontend API boundary; Flow UI consumes frontend models only.
+- Added Flow card, Flow form, and status helper tests.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"` showed generated OpenAPI usage only in `frontend/src/api/mappers.ts` and `frontend/src/api/real.ts`.
+- `git diff --check`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+- Focus pages, Focus edit behavior, and Goal screens remain deferred to the next frontend steps.
