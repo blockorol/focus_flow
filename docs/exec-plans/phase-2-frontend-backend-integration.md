@@ -1,6 +1,6 @@
 # Phase 2 - Frontend MVP, backend hardening, and integration
 
-Status: steps 1.1 through 1.6 complete and awaiting review on 2026-09-14.
+Status: steps 1.1 through 1.7 complete and awaiting review on 2026-09-14.
 
 ## Goal
 
@@ -100,7 +100,7 @@ If backend hardening reveals a persistence model issue, stop before changing the
 
 #### 1.7 Focus edit UI
 
-- [ ] **Goal:** edit generic Focus fields.
+- [x] **Goal:** edit generic Focus fields.
 - **Files/packages expected to change:** frontend Focus edit form/components, mock client behavior, tests.
 - **Implementation notes:** support editing name, status, tags, description, feedback, and color; support clearing nullable fields; show not-found and conflict errors.
 - **Commands/checks:** edit happy-path test; clear-fields test; conflict error display test; frontend typecheck; manual browser check.
@@ -399,3 +399,27 @@ Notes:
 
 - Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
 - Focus edit behavior and Goal management UI remain deferred to the next frontend steps.
+
+## Step 1.7 completion notes
+
+- Added `FocusEditForm` for generic Focus fields: name, status, tags, description, feedback, and color.
+- Added update request building that sends empty nullable fields through `clearFields` for description, feedback, and color.
+- Kept hierarchy/parent changes out of the edit form.
+- Wired the Focus details page to save edits through the frontend API boundary and reload the Focus aggregate.
+- Preserved not-found and conflict error display paths through the existing API error normalization and form error state.
+- Kept generated OpenAPI DTOs isolated to the frontend API boundary; Focus edit UI consumes frontend models only.
+- Added Focus edit form and update input builder tests.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"` showed generated OpenAPI usage only in `frontend/src/api/mappers.ts` and `frontend/src/api/real.ts`.
+- `git diff --check`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+- Goal management UI remains deferred to the next frontend step.

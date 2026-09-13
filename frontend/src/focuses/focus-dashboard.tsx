@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { AppAPIError, type CreateFocusInput, type Focus } from '@/api';
+import { AppAPIError, type CreateFocusInput, type Focus, type UpdateFocusInput } from '@/api';
 import { getBrowserAPI } from '@/api/browser';
 import { PageHeader } from '@/app-shell';
 import { Button, EmptyState, ErrorState, LoadingState } from '@/ui';
 import { ChildFocusCard } from './child-focus-card';
 import { CreateChildFocusForm } from './create-child-focus-form';
+import { FocusEditForm } from './focus-edit-form';
 import { FocusSummary } from './focus-summary';
 
 type CreateChildFocusInput = Omit<CreateFocusInput, 'parentId'>;
@@ -66,6 +67,14 @@ export function FocusDashboard({ focusId }: FocusDashboardProps) {
     await loadFocus();
   }
 
+  async function updateFocus(input: UpdateFocusInput) {
+    const api = getBrowserAPI();
+    const updated = await api.updateFocus(focusId, input);
+    const reloaded = await api.getFocus(focusId, { include: ['children', 'goals'], depth: 1 });
+    setFocus(reloaded);
+    return { ...updated, children: reloaded.children, goals: reloaded.goals };
+  }
+
   return (
     <div className="grid gap-6">
       <PageHeader
@@ -91,7 +100,10 @@ export function FocusDashboard({ focusId }: FocusDashboardProps) {
 
       {!loading && !error && focus ? (
         <div className="grid gap-5 xl:grid-cols-[minmax(280px,380px)_1fr]">
-          <CreateChildFocusForm onCreate={createChild} />
+          <div className="grid content-start gap-5">
+            <FocusEditForm key={focus.id} focus={focus} onSave={updateFocus} />
+            <CreateChildFocusForm onCreate={createChild} />
+          </div>
 
           <section className="grid content-start gap-4">
             <FocusSummary focus={focus} />
@@ -120,4 +132,3 @@ function errorMessage(cause: unknown) {
   if (cause instanceof Error) return cause.message;
   return 'The request failed.';
 }
-

@@ -87,10 +87,11 @@ Blocked locally:
 - Phase 2 step 1.4 app shell is complete in the working tree.
 - Phase 2 step 1.5 Flows UI is complete in the working tree.
 - Phase 2 step 1.6 Focus page UI is complete in the working tree.
+- Phase 2 step 1.7 Focus edit UI is complete in the working tree.
 
 ## Next action
 
-Phase 2 steps 1.1 through 1.6 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.7: Focus edit UI. Do not start implementation until the user approves continuing.
+Phase 2 steps 1.1 through 1.7 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.8: Goals UI. Do not start implementation until the user approves continuing.
 
 ## BE full MVP point 1 result
 
@@ -383,5 +384,31 @@ Validation:
 Not done in this step:
 
 - no Focus edit behavior;
+- no Goal management UI;
+- no real backend integration.
+
+## Phase 2 step 1.7 result
+
+Completed:
+
+- Added generic Focus edit UI on the Focus details page.
+- Supported editing name, status, tags, description, feedback, and color.
+- Supported clearing nullable Focus fields through `clearFields` for description, feedback, and color.
+- Kept parent/hierarchy changes out of the edit form.
+- Wired edit saves through the frontend API boundary and refreshed the Focus aggregate after save.
+- Kept generated OpenAPI DTO usage isolated to the frontend API boundary; Focus edit UI uses frontend models.
+- Added Focus edit form and update request builder tests.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"`.
+- `git diff --check`.
+
+Not done in this step:
+
 - no Goal management UI;
 - no real backend integration.
