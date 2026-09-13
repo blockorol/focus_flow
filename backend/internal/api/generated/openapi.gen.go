@@ -11,14 +11,174 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// Defines values for CreateGoalRequestStatusOverride.
+const (
+	CreateGoalRequestStatusOverrideActive    CreateGoalRequestStatusOverride = "active"
+	CreateGoalRequestStatusOverrideCancelled CreateGoalRequestStatusOverride = "cancelled"
+	CreateGoalRequestStatusOverrideDone      CreateGoalRequestStatusOverride = "done"
+	CreateGoalRequestStatusOverrideIdea      CreateGoalRequestStatusOverride = "idea"
+	CreateGoalRequestStatusOverridePaused    CreateGoalRequestStatusOverride = "paused"
+	CreateGoalRequestStatusOverridePlanned   CreateGoalRequestStatusOverride = "planned"
+	CreateGoalRequestStatusOverrideWaiting   CreateGoalRequestStatusOverride = "waiting"
+)
+
+// Valid indicates whether the value is a known member of the CreateGoalRequestStatusOverride enum.
+func (e CreateGoalRequestStatusOverride) Valid() bool {
+	switch e {
+	case CreateGoalRequestStatusOverrideActive:
+		return true
+	case CreateGoalRequestStatusOverrideCancelled:
+		return true
+	case CreateGoalRequestStatusOverrideDone:
+		return true
+	case CreateGoalRequestStatusOverrideIdea:
+		return true
+	case CreateGoalRequestStatusOverridePaused:
+		return true
+	case CreateGoalRequestStatusOverridePlanned:
+		return true
+	case CreateGoalRequestStatusOverrideWaiting:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FocusClearField.
+const (
+	Color       FocusClearField = "color"
+	Description FocusClearField = "description"
+	Feedback    FocusClearField = "feedback"
+	ParentId    FocusClearField = "parentId"
+)
+
+// Valid indicates whether the value is a known member of the FocusClearField enum.
+func (e FocusClearField) Valid() bool {
+	switch e {
+	case Color:
+		return true
+	case Description:
+		return true
+	case Feedback:
+		return true
+	case ParentId:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FocusStatus.
+const (
+	FocusStatusActive    FocusStatus = "active"
+	FocusStatusCancelled FocusStatus = "cancelled"
+	FocusStatusDone      FocusStatus = "done"
+	FocusStatusIdea      FocusStatus = "idea"
+	FocusStatusPaused    FocusStatus = "paused"
+	FocusStatusPlanned   FocusStatus = "planned"
+	FocusStatusWaiting   FocusStatus = "waiting"
+)
+
+// Valid indicates whether the value is a known member of the FocusStatus enum.
+func (e FocusStatus) Valid() bool {
+	switch e {
+	case FocusStatusActive:
+		return true
+	case FocusStatusCancelled:
+		return true
+	case FocusStatusDone:
+		return true
+	case FocusStatusIdea:
+		return true
+	case FocusStatusPaused:
+		return true
+	case FocusStatusPlanned:
+		return true
+	case FocusStatusWaiting:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GoalStatusOverride.
+const (
+	GoalStatusOverrideActive    GoalStatusOverride = "active"
+	GoalStatusOverrideCancelled GoalStatusOverride = "cancelled"
+	GoalStatusOverrideDone      GoalStatusOverride = "done"
+	GoalStatusOverrideIdea      GoalStatusOverride = "idea"
+	GoalStatusOverridePaused    GoalStatusOverride = "paused"
+	GoalStatusOverridePlanned   GoalStatusOverride = "planned"
+	GoalStatusOverrideWaiting   GoalStatusOverride = "waiting"
+)
+
+// Valid indicates whether the value is a known member of the GoalStatusOverride enum.
+func (e GoalStatusOverride) Valid() bool {
+	switch e {
+	case GoalStatusOverrideActive:
+		return true
+	case GoalStatusOverrideCancelled:
+		return true
+	case GoalStatusOverrideDone:
+		return true
+	case GoalStatusOverrideIdea:
+		return true
+	case GoalStatusOverridePaused:
+		return true
+	case GoalStatusOverridePlanned:
+		return true
+	case GoalStatusOverrideWaiting:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GoalClearField.
+const (
+	StatusOverride GoalClearField = "statusOverride"
+)
+
+// Valid indicates whether the value is a known member of the GoalClearField enum.
+func (e GoalClearField) Valid() bool {
+	switch e {
+	case StatusOverride:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GoalType.
+const (
+	Primary   GoalType = "primary"
+	Secondary GoalType = "secondary"
+)
+
+// Valid indicates whether the value is a known member of the GoalType enum.
+func (e GoalType) Valid() bool {
+	switch e {
+	case Primary:
+		return true
+	case Secondary:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for HealthResponseStatus.
 const (
@@ -35,6 +195,136 @@ func (e HealthResponseStatus) Valid() bool {
 	}
 }
 
+// AuthResponse defines model for AuthResponse.
+type AuthResponse struct {
+	Session AuthSession `json:"session"`
+}
+
+// AuthSession defines model for AuthSession.
+type AuthSession struct {
+	ExpiresAt Timestamp `json:"expiresAt"`
+	User      User      `json:"user"`
+}
+
+// CreateFlowRequest defines model for CreateFlowRequest.
+type CreateFlowRequest struct {
+	Color       *string      `json:"color,omitempty"`
+	Description *string      `json:"description,omitempty"`
+	Feedback    *string      `json:"feedback,omitempty"`
+	Name        string       `json:"name"`
+	Status      *FocusStatus `json:"status,omitempty"`
+	Tags        *[]string    `json:"tags,omitempty"`
+}
+
+// CreateFocusRequest defines model for CreateFocusRequest.
+type CreateFocusRequest struct {
+	Color       *string             `json:"color,omitempty"`
+	Description *string             `json:"description,omitempty"`
+	Feedback    *string             `json:"feedback,omitempty"`
+	Name        string              `json:"name"`
+	ParentId    *openapi_types.UUID `json:"parentId,omitempty"`
+	Status      *FocusStatus        `json:"status,omitempty"`
+	Tags        *[]string           `json:"tags,omitempty"`
+}
+
+// CreateGoalRequest defines model for CreateGoalRequest.
+type CreateGoalRequest struct {
+	Description    string                           `json:"description"`
+	LinkedFocusIds *[]UUID                          `json:"linkedFocusIds,omitempty"`
+	StatusOverride *CreateGoalRequestStatusOverride `json:"statusOverride,omitempty"`
+	Type           GoalType                         `json:"type"`
+}
+
+// CreateGoalRequestStatusOverride defines model for CreateGoalRequest.StatusOverride.
+type CreateGoalRequestStatusOverride string
+
+// ErrorResponse defines model for ErrorResponse.
+type ErrorResponse struct {
+	Code      string  `json:"code"`
+	Message   string  `json:"message"`
+	RequestId *string `json:"requestId,omitempty"`
+}
+
+// Focus defines model for Focus.
+type Focus struct {
+	Children    []Focus             `json:"children"`
+	Color       *string             `json:"color"`
+	CreatedAt   Timestamp           `json:"createdAt"`
+	Description *string             `json:"description"`
+	Feedback    *string             `json:"feedback"`
+	FinishedAt  *time.Time          `json:"finishedAt"`
+	Goals       []Goal              `json:"goals"`
+	Id          UUID                `json:"id"`
+	Name        string              `json:"name"`
+	ParentId    *openapi_types.UUID `json:"parentId"`
+	Status      FocusStatus         `json:"status"`
+	Tags        []string            `json:"tags"`
+	UpdatedAt   Timestamp           `json:"updatedAt"`
+}
+
+// FocusClearField defines model for FocusClearField.
+type FocusClearField string
+
+// FocusPage defines model for FocusPage.
+type FocusPage struct {
+	Count      int     `json:"count"`
+	HasMore    bool    `json:"hasMore"`
+	Items      []Focus `json:"items"`
+	NextCursor *string `json:"nextCursor"`
+}
+
+// FocusResponse defines model for FocusResponse.
+type FocusResponse struct {
+	Focus Focus `json:"focus"`
+}
+
+// FocusStatus defines model for FocusStatus.
+type FocusStatus string
+
+// Goal defines model for Goal.
+type Goal struct {
+	CreatedAt      Timestamp           `json:"createdAt"`
+	Description    string              `json:"description"`
+	FinishedAt     *time.Time          `json:"finishedAt"`
+	Id             UUID                `json:"id"`
+	LinkedFocusIds []UUID              `json:"linkedFocusIds"`
+	OwnerFocusId   UUID                `json:"ownerFocusId"`
+	Progress       GoalProgress        `json:"progress"`
+	StatusOverride *GoalStatusOverride `json:"statusOverride"`
+	Type           GoalType            `json:"type"`
+	UpdatedAt      Timestamp           `json:"updatedAt"`
+}
+
+// GoalStatusOverride defines model for Goal.StatusOverride.
+type GoalStatusOverride string
+
+// GoalClearField defines model for GoalClearField.
+type GoalClearField string
+
+// GoalPage defines model for GoalPage.
+type GoalPage struct {
+	Count      int     `json:"count"`
+	HasMore    bool    `json:"hasMore"`
+	Items      []Goal  `json:"items"`
+	NextCursor *string `json:"nextCursor"`
+}
+
+// GoalProgress defines model for GoalProgress.
+type GoalProgress struct {
+	DoneCount     int            `json:"doneCount"`
+	LinkedCount   int            `json:"linkedCount"`
+	StatusCounts  map[string]int `json:"statusCounts"`
+	TerminalCount int            `json:"terminalCount"`
+}
+
+// GoalResponse defines model for GoalResponse.
+type GoalResponse struct {
+	Goal Goal `json:"goal"`
+}
+
+// GoalType defines model for GoalType.
+type GoalType string
+
 // HealthResponse defines model for HealthResponse.
 type HealthResponse struct {
 	Status HealthResponseStatus `json:"status"`
@@ -43,8 +333,190 @@ type HealthResponse struct {
 // HealthResponseStatus defines model for HealthResponse.Status.
 type HealthResponseStatus string
 
+// LinkGoalFocusRequest defines model for LinkGoalFocusRequest.
+type LinkGoalFocusRequest struct {
+	FocusId UUID `json:"focusId"`
+}
+
+// LoginRequest defines model for LoginRequest.
+type LoginRequest struct {
+	Password string `json:"password"`
+	Username string `json:"username"`
+}
+
+// Timestamp defines model for Timestamp.
+type Timestamp = time.Time
+
+// UUID defines model for UUID.
+type UUID = openapi_types.UUID
+
+// UpdateFocusRequest defines model for UpdateFocusRequest.
+type UpdateFocusRequest struct {
+	ClearFields *[]FocusClearField `json:"clearFields,omitempty"`
+	Color       *string            `json:"color,omitempty"`
+	Description *string            `json:"description,omitempty"`
+	Feedback    *string            `json:"feedback,omitempty"`
+	Name        *string            `json:"name,omitempty"`
+	ParentId    *UUID              `json:"parentId,omitempty"`
+	Status      *FocusStatus       `json:"status,omitempty"`
+	Tags        *[]string          `json:"tags,omitempty"`
+}
+
+// UpdateGoalRequest defines model for UpdateGoalRequest.
+type UpdateGoalRequest struct {
+	ClearFields    *[]GoalClearField `json:"clearFields,omitempty"`
+	Description    *string           `json:"description,omitempty"`
+	LinkedFocusIds *[]UUID           `json:"linkedFocusIds,omitempty"`
+	StatusOverride *FocusStatus      `json:"statusOverride,omitempty"`
+	Type           *GoalType         `json:"type,omitempty"`
+}
+
+// User defines model for User.
+type User struct {
+	Id       UUID   `json:"id"`
+	Username string `json:"username"`
+}
+
+// Cursor defines model for Cursor.
+type Cursor = string
+
+// Depth defines model for Depth.
+type Depth = int
+
+// FocusID defines model for FocusID.
+type FocusID = UUID
+
+// GoalID defines model for GoalID.
+type GoalID = UUID
+
+// Include Example: goals,children
+type Include = string
+
+// Limit defines model for Limit.
+type Limit = int
+
+// NotFound defines model for NotFound.
+type NotFound = ErrorResponse
+
+// Unauthorized defines model for Unauthorized.
+type Unauthorized = ErrorResponse
+
+// ListFlowsParams defines parameters for ListFlows.
+type ListFlowsParams struct {
+	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Include Comma-separated related data to include. Current supported values are `goals` and `children`.
+	Include *Include `form:"include,omitempty" json:"include,omitempty"`
+
+	// Depth Descendant depth to include for child Focus trees. Zero means no descendant tree expansion.
+	Depth *Depth `form:"depth,omitempty" json:"depth,omitempty"`
+}
+
+// GetFocusParams defines parameters for GetFocus.
+type GetFocusParams struct {
+	// Include Comma-separated related data to include. Current supported values are `goals` and `children`.
+	Include *Include `form:"include,omitempty" json:"include,omitempty"`
+
+	// Depth Descendant depth to include for child Focus trees. Zero means no descendant tree expansion.
+	Depth *Depth `form:"depth,omitempty" json:"depth,omitempty"`
+}
+
+// ListFocusChildrenParams defines parameters for ListFocusChildren.
+type ListFocusChildrenParams struct {
+	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Include Comma-separated related data to include. Current supported values are `goals` and `children`.
+	Include *Include `form:"include,omitempty" json:"include,omitempty"`
+
+	// Depth Descendant depth to include for child Focus trees. Zero means no descendant tree expansion.
+	Depth *Depth `form:"depth,omitempty" json:"depth,omitempty"`
+}
+
+// ListFocusGoalsParams defines parameters for ListFocusGoals.
+type ListFocusGoalsParams struct {
+	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
+// LoginJSONRequestBody defines body for Login for application/json ContentType.
+type LoginJSONRequestBody = LoginRequest
+
+// CreateFlowJSONRequestBody defines body for CreateFlow for application/json ContentType.
+type CreateFlowJSONRequestBody = CreateFlowRequest
+
+// CreateFocusJSONRequestBody defines body for CreateFocus for application/json ContentType.
+type CreateFocusJSONRequestBody = CreateFocusRequest
+
+// UpdateFocusJSONRequestBody defines body for UpdateFocus for application/json ContentType.
+type UpdateFocusJSONRequestBody = UpdateFocusRequest
+
+// CreateGoalJSONRequestBody defines body for CreateGoal for application/json ContentType.
+type CreateGoalJSONRequestBody = CreateGoalRequest
+
+// UpdateGoalJSONRequestBody defines body for UpdateGoal for application/json ContentType.
+type UpdateGoalJSONRequestBody = UpdateGoalRequest
+
+// LinkGoalFocusJSONRequestBody defines body for LinkGoalFocus for application/json ContentType.
+type LinkGoalFocusJSONRequestBody = LinkGoalFocusRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Login Log in with configured credentials
+	// (POST /v1/auth/login)
+	Login(w http.ResponseWriter, r *http.Request)
+	// Logout Clear the current session cookie
+	// (POST /v1/auth/logout)
+	Logout(w http.ResponseWriter, r *http.Request)
+	// GetCurrentSession Get the current authenticated session
+	// (GET /v1/auth/me)
+	GetCurrentSession(w http.ResponseWriter, r *http.Request)
+	// RefreshSession Refresh a currently valid session
+	// (POST /v1/auth/refresh)
+	RefreshSession(w http.ResponseWriter, r *http.Request)
+	// ListFlows List root Focuses
+	// (GET /v1/flows)
+	ListFlows(w http.ResponseWriter, r *http.Request, params ListFlowsParams)
+	// CreateFlow Create a root Focus
+	// (POST /v1/flows)
+	CreateFlow(w http.ResponseWriter, r *http.Request)
+	// CreateFocus Create a child or root Focus
+	// (POST /v1/focuses)
+	CreateFocus(w http.ResponseWriter, r *http.Request)
+	// DeleteFocus Delete a Focus subtree
+	// (DELETE /v1/focuses/{id})
+	DeleteFocus(w http.ResponseWriter, r *http.Request, id FocusID)
+	// GetFocus Get a Focus aggregate
+	// (GET /v1/focuses/{id})
+	GetFocus(w http.ResponseWriter, r *http.Request, id FocusID, params GetFocusParams)
+	// UpdateFocus Update a Focus
+	// (PATCH /v1/focuses/{id})
+	UpdateFocus(w http.ResponseWriter, r *http.Request, id FocusID)
+	// ListFocusChildren List child Focuses
+	// (GET /v1/focuses/{id}/children)
+	ListFocusChildren(w http.ResponseWriter, r *http.Request, id FocusID, params ListFocusChildrenParams)
+	// ListFocusGoals List Goals owned by a Focus
+	// (GET /v1/focuses/{id}/goals)
+	ListFocusGoals(w http.ResponseWriter, r *http.Request, id FocusID, params ListFocusGoalsParams)
+	// CreateGoal Create a Goal owned by a Focus
+	// (POST /v1/focuses/{id}/goals)
+	CreateGoal(w http.ResponseWriter, r *http.Request, id FocusID)
+	// DeleteGoal Delete a Goal
+	// (DELETE /v1/goals/{id})
+	DeleteGoal(w http.ResponseWriter, r *http.Request, id GoalID)
+	// GetGoal Get a Goal
+	// (GET /v1/goals/{id})
+	GetGoal(w http.ResponseWriter, r *http.Request, id GoalID)
+	// UpdateGoal Update a Goal
+	// (PATCH /v1/goals/{id})
+	UpdateGoal(w http.ResponseWriter, r *http.Request, id GoalID)
+	// LinkGoalFocus Link a Goal to a Focus
+	// (POST /v1/goals/{id}/focuses)
+	LinkGoalFocus(w http.ResponseWriter, r *http.Request, id GoalID)
+	// UnlinkGoalFocus Remove a Goal-to-Focus link
+	// (DELETE /v1/goals/{id}/focuses/{focusId})
+	UnlinkGoalFocus(w http.ResponseWriter, r *http.Request, id GoalID, focusId UUID)
 	// GetHealth Check process liveness
 	// (GET /v1/health)
 	GetHealth(w http.ResponseWriter, r *http.Request)
@@ -58,6 +530,570 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// Login operation middleware
+func (siw *ServerInterfaceWrapper) Login(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Login(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Logout operation middleware
+func (siw *ServerInterfaceWrapper) Logout(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Logout(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCurrentSession operation middleware
+func (siw *ServerInterfaceWrapper) GetCurrentSession(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCurrentSession(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RefreshSession operation middleware
+func (siw *ServerInterfaceWrapper) RefreshSession(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RefreshSession(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListFlows operation middleware
+func (siw *ServerInterfaceWrapper) ListFlows(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListFlowsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include", r.URL.Query(), &params.Include, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "depth" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "depth", r.URL.Query(), &params.Depth, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "depth"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "depth", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFlows(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateFlow operation middleware
+func (siw *ServerInterfaceWrapper) CreateFlow(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateFlow(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateFocus operation middleware
+func (siw *ServerInterfaceWrapper) CreateFocus(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateFocus(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteFocus operation middleware
+func (siw *ServerInterfaceWrapper) DeleteFocus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id FocusID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteFocus(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetFocus operation middleware
+func (siw *ServerInterfaceWrapper) GetFocus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id FocusID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetFocusParams
+
+	// ------------- Optional query parameter "include" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include", r.URL.Query(), &params.Include, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "depth" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "depth", r.URL.Query(), &params.Depth, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "depth"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "depth", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFocus(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateFocus operation middleware
+func (siw *ServerInterfaceWrapper) UpdateFocus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id FocusID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateFocus(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListFocusChildren operation middleware
+func (siw *ServerInterfaceWrapper) ListFocusChildren(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id FocusID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListFocusChildrenParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include", r.URL.Query(), &params.Include, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "depth" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "depth", r.URL.Query(), &params.Depth, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "depth"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "depth", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFocusChildren(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListFocusGoals operation middleware
+func (siw *ServerInterfaceWrapper) ListFocusGoals(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id FocusID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListFocusGoalsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFocusGoals(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGoal operation middleware
+func (siw *ServerInterfaceWrapper) CreateGoal(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id FocusID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGoal(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGoal operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGoal(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id GoalID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGoal(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGoal operation middleware
+func (siw *ServerInterfaceWrapper) GetGoal(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id GoalID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGoal(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateGoal operation middleware
+func (siw *ServerInterfaceWrapper) UpdateGoal(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id GoalID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateGoal(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// LinkGoalFocus operation middleware
+func (siw *ServerInterfaceWrapper) LinkGoalFocus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id GoalID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.LinkGoalFocus(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnlinkGoalFocus operation middleware
+func (siw *ServerInterfaceWrapper) UnlinkGoalFocus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id GoalID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "focusId" -------------
+	var focusId UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "focusId", r.PathValue("focusId"), &focusId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "focusId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnlinkGoalFocus(w, r, id, focusId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetHealth operation middleware
 func (siw *ServerInterfaceWrapper) GetHealth(w http.ResponseWriter, r *http.Request) {
@@ -194,8 +1230,805 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/health", wrapper.GetHealth)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/v1/auth/login", wrapper.Login)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/v1/auth/logout", wrapper.Logout)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/v1/auth/refresh", wrapper.RefreshSession)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/auth/me", wrapper.GetCurrentSession)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/flows", wrapper.ListFlows)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/v1/flows", wrapper.CreateFlow)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/v1/focuses", wrapper.CreateFocus)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/v1/focuses/{id}", wrapper.DeleteFocus)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/focuses/{id}", wrapper.GetFocus)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/v1/focuses/{id}", wrapper.UpdateFocus)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/focuses/{id}/children", wrapper.ListFocusChildren)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/focuses/{id}/goals", wrapper.ListFocusGoals)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/v1/focuses/{id}/goals", wrapper.CreateGoal)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/v1/goals/{id}", wrapper.DeleteGoal)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/goals/{id}", wrapper.GetGoal)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/v1/goals/{id}", wrapper.UpdateGoal)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/v1/goals/{id}/focuses", wrapper.LinkGoalFocus)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/v1/goals/{id}/focuses/{focusId}", wrapper.UnlinkGoalFocus)
 
 	return m
+}
+
+type NotFoundJSONResponse ErrorResponse
+
+type UnauthorizedJSONResponse ErrorResponse
+
+type LoginRequestObject struct {
+	Body *LoginJSONRequestBody
+}
+
+type LoginResponseObject interface {
+	VisitLoginResponse(w http.ResponseWriter) error
+}
+
+type Login200JSONResponse AuthResponse
+
+func (response Login200JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type Login401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response Login401JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LogoutRequestObject struct {
+}
+
+type LogoutResponseObject interface {
+	VisitLogoutResponse(w http.ResponseWriter) error
+}
+
+type Logout204Response struct {
+}
+
+func (response Logout204Response) VisitLogoutResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type GetCurrentSessionRequestObject struct {
+}
+
+type GetCurrentSessionResponseObject interface {
+	VisitGetCurrentSessionResponse(w http.ResponseWriter) error
+}
+
+type GetCurrentSession200JSONResponse AuthResponse
+
+func (response GetCurrentSession200JSONResponse) VisitGetCurrentSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCurrentSession401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetCurrentSession401JSONResponse) VisitGetCurrentSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RefreshSessionRequestObject struct {
+}
+
+type RefreshSessionResponseObject interface {
+	VisitRefreshSessionResponse(w http.ResponseWriter) error
+}
+
+type RefreshSession200JSONResponse AuthResponse
+
+func (response RefreshSession200JSONResponse) VisitRefreshSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RefreshSession401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response RefreshSession401JSONResponse) VisitRefreshSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFlowsRequestObject struct {
+	Params ListFlowsParams
+}
+
+type ListFlowsResponseObject interface {
+	VisitListFlowsResponse(w http.ResponseWriter) error
+}
+
+type ListFlows200JSONResponse FocusPage
+
+func (response ListFlows200JSONResponse) VisitListFlowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFlows401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListFlows401JSONResponse) VisitListFlowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFlowRequestObject struct {
+	Body *CreateFlowJSONRequestBody
+}
+
+type CreateFlowResponseObject interface {
+	VisitCreateFlowResponse(w http.ResponseWriter) error
+}
+
+type CreateFlow201JSONResponse FocusResponse
+
+func (response CreateFlow201JSONResponse) VisitCreateFlowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFlow401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response CreateFlow401JSONResponse) VisitCreateFlowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFocusRequestObject struct {
+	Body *CreateFocusJSONRequestBody
+}
+
+type CreateFocusResponseObject interface {
+	VisitCreateFocusResponse(w http.ResponseWriter) error
+}
+
+type CreateFocus201JSONResponse FocusResponse
+
+func (response CreateFocus201JSONResponse) VisitCreateFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFocus401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response CreateFocus401JSONResponse) VisitCreateFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteFocusRequestObject struct {
+	Id FocusID `json:"id"`
+}
+
+type DeleteFocusResponseObject interface {
+	VisitDeleteFocusResponse(w http.ResponseWriter) error
+}
+
+type DeleteFocus204Response struct {
+}
+
+func (response DeleteFocus204Response) VisitDeleteFocusResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteFocus401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response DeleteFocus401JSONResponse) VisitDeleteFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteFocus404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeleteFocus404JSONResponse) VisitDeleteFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetFocusRequestObject struct {
+	Id     FocusID `json:"id"`
+	Params GetFocusParams
+}
+
+type GetFocusResponseObject interface {
+	VisitGetFocusResponse(w http.ResponseWriter) error
+}
+
+type GetFocus200JSONResponse FocusResponse
+
+func (response GetFocus200JSONResponse) VisitGetFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetFocus401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetFocus401JSONResponse) VisitGetFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetFocus404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetFocus404JSONResponse) VisitGetFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateFocusRequestObject struct {
+	Id   FocusID `json:"id"`
+	Body *UpdateFocusJSONRequestBody
+}
+
+type UpdateFocusResponseObject interface {
+	VisitUpdateFocusResponse(w http.ResponseWriter) error
+}
+
+type UpdateFocus200JSONResponse FocusResponse
+
+func (response UpdateFocus200JSONResponse) VisitUpdateFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateFocus401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateFocus401JSONResponse) VisitUpdateFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateFocus404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UpdateFocus404JSONResponse) VisitUpdateFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFocusChildrenRequestObject struct {
+	Id     FocusID `json:"id"`
+	Params ListFocusChildrenParams
+}
+
+type ListFocusChildrenResponseObject interface {
+	VisitListFocusChildrenResponse(w http.ResponseWriter) error
+}
+
+type ListFocusChildren200JSONResponse FocusPage
+
+func (response ListFocusChildren200JSONResponse) VisitListFocusChildrenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFocusChildren401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListFocusChildren401JSONResponse) VisitListFocusChildrenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFocusChildren404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ListFocusChildren404JSONResponse) VisitListFocusChildrenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFocusGoalsRequestObject struct {
+	Id     FocusID `json:"id"`
+	Params ListFocusGoalsParams
+}
+
+type ListFocusGoalsResponseObject interface {
+	VisitListFocusGoalsResponse(w http.ResponseWriter) error
+}
+
+type ListFocusGoals200JSONResponse GoalPage
+
+func (response ListFocusGoals200JSONResponse) VisitListFocusGoalsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFocusGoals401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListFocusGoals401JSONResponse) VisitListFocusGoalsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFocusGoals404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ListFocusGoals404JSONResponse) VisitListFocusGoalsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGoalRequestObject struct {
+	Id   FocusID `json:"id"`
+	Body *CreateGoalJSONRequestBody
+}
+
+type CreateGoalResponseObject interface {
+	VisitCreateGoalResponse(w http.ResponseWriter) error
+}
+
+type CreateGoal201JSONResponse GoalResponse
+
+func (response CreateGoal201JSONResponse) VisitCreateGoalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGoal401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response CreateGoal401JSONResponse) VisitCreateGoalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGoal404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response CreateGoal404JSONResponse) VisitCreateGoalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGoalRequestObject struct {
+	Id GoalID `json:"id"`
+}
+
+type DeleteGoalResponseObject interface {
+	VisitDeleteGoalResponse(w http.ResponseWriter) error
+}
+
+type DeleteGoal204Response struct {
+}
+
+func (response DeleteGoal204Response) VisitDeleteGoalResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteGoal401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response DeleteGoal401JSONResponse) VisitDeleteGoalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGoal404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeleteGoal404JSONResponse) VisitDeleteGoalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGoalRequestObject struct {
+	Id GoalID `json:"id"`
+}
+
+type GetGoalResponseObject interface {
+	VisitGetGoalResponse(w http.ResponseWriter) error
+}
+
+type GetGoal200JSONResponse GoalResponse
+
+func (response GetGoal200JSONResponse) VisitGetGoalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGoal401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetGoal401JSONResponse) VisitGetGoalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGoal404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetGoal404JSONResponse) VisitGetGoalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGoalRequestObject struct {
+	Id   GoalID `json:"id"`
+	Body *UpdateGoalJSONRequestBody
+}
+
+type UpdateGoalResponseObject interface {
+	VisitUpdateGoalResponse(w http.ResponseWriter) error
+}
+
+type UpdateGoal200JSONResponse GoalResponse
+
+func (response UpdateGoal200JSONResponse) VisitUpdateGoalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGoal401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateGoal401JSONResponse) VisitUpdateGoalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGoal404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UpdateGoal404JSONResponse) VisitUpdateGoalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LinkGoalFocusRequestObject struct {
+	Id   GoalID `json:"id"`
+	Body *LinkGoalFocusJSONRequestBody
+}
+
+type LinkGoalFocusResponseObject interface {
+	VisitLinkGoalFocusResponse(w http.ResponseWriter) error
+}
+
+type LinkGoalFocus200JSONResponse GoalResponse
+
+func (response LinkGoalFocus200JSONResponse) VisitLinkGoalFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LinkGoalFocus401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response LinkGoalFocus401JSONResponse) VisitLinkGoalFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LinkGoalFocus404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response LinkGoalFocus404JSONResponse) VisitLinkGoalFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlinkGoalFocusRequestObject struct {
+	Id      GoalID `json:"id"`
+	FocusId UUID   `json:"focusId"`
+}
+
+type UnlinkGoalFocusResponseObject interface {
+	VisitUnlinkGoalFocusResponse(w http.ResponseWriter) error
+}
+
+type UnlinkGoalFocus200JSONResponse GoalResponse
+
+func (response UnlinkGoalFocus200JSONResponse) VisitUnlinkGoalFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlinkGoalFocus401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UnlinkGoalFocus401JSONResponse) VisitUnlinkGoalFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlinkGoalFocus404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UnlinkGoalFocus404JSONResponse) VisitUnlinkGoalFocusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type GetHealthRequestObject struct {
@@ -221,6 +2054,60 @@ func (response GetHealth200JSONResponse) VisitGetHealthResponse(w http.ResponseW
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// Login Log in with configured credentials
+	// (POST /v1/auth/login)
+	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
+	// Logout Clear the current session cookie
+	// (POST /v1/auth/logout)
+	Logout(ctx context.Context, request LogoutRequestObject) (LogoutResponseObject, error)
+	// GetCurrentSession Get the current authenticated session
+	// (GET /v1/auth/me)
+	GetCurrentSession(ctx context.Context, request GetCurrentSessionRequestObject) (GetCurrentSessionResponseObject, error)
+	// RefreshSession Refresh a currently valid session
+	// (POST /v1/auth/refresh)
+	RefreshSession(ctx context.Context, request RefreshSessionRequestObject) (RefreshSessionResponseObject, error)
+	// ListFlows List root Focuses
+	// (GET /v1/flows)
+	ListFlows(ctx context.Context, request ListFlowsRequestObject) (ListFlowsResponseObject, error)
+	// CreateFlow Create a root Focus
+	// (POST /v1/flows)
+	CreateFlow(ctx context.Context, request CreateFlowRequestObject) (CreateFlowResponseObject, error)
+	// CreateFocus Create a child or root Focus
+	// (POST /v1/focuses)
+	CreateFocus(ctx context.Context, request CreateFocusRequestObject) (CreateFocusResponseObject, error)
+	// DeleteFocus Delete a Focus subtree
+	// (DELETE /v1/focuses/{id})
+	DeleteFocus(ctx context.Context, request DeleteFocusRequestObject) (DeleteFocusResponseObject, error)
+	// GetFocus Get a Focus aggregate
+	// (GET /v1/focuses/{id})
+	GetFocus(ctx context.Context, request GetFocusRequestObject) (GetFocusResponseObject, error)
+	// UpdateFocus Update a Focus
+	// (PATCH /v1/focuses/{id})
+	UpdateFocus(ctx context.Context, request UpdateFocusRequestObject) (UpdateFocusResponseObject, error)
+	// ListFocusChildren List child Focuses
+	// (GET /v1/focuses/{id}/children)
+	ListFocusChildren(ctx context.Context, request ListFocusChildrenRequestObject) (ListFocusChildrenResponseObject, error)
+	// ListFocusGoals List Goals owned by a Focus
+	// (GET /v1/focuses/{id}/goals)
+	ListFocusGoals(ctx context.Context, request ListFocusGoalsRequestObject) (ListFocusGoalsResponseObject, error)
+	// CreateGoal Create a Goal owned by a Focus
+	// (POST /v1/focuses/{id}/goals)
+	CreateGoal(ctx context.Context, request CreateGoalRequestObject) (CreateGoalResponseObject, error)
+	// DeleteGoal Delete a Goal
+	// (DELETE /v1/goals/{id})
+	DeleteGoal(ctx context.Context, request DeleteGoalRequestObject) (DeleteGoalResponseObject, error)
+	// GetGoal Get a Goal
+	// (GET /v1/goals/{id})
+	GetGoal(ctx context.Context, request GetGoalRequestObject) (GetGoalResponseObject, error)
+	// UpdateGoal Update a Goal
+	// (PATCH /v1/goals/{id})
+	UpdateGoal(ctx context.Context, request UpdateGoalRequestObject) (UpdateGoalResponseObject, error)
+	// LinkGoalFocus Link a Goal to a Focus
+	// (POST /v1/goals/{id}/focuses)
+	LinkGoalFocus(ctx context.Context, request LinkGoalFocusRequestObject) (LinkGoalFocusResponseObject, error)
+	// UnlinkGoalFocus Remove a Goal-to-Focus link
+	// (DELETE /v1/goals/{id}/focuses/{focusId})
+	UnlinkGoalFocus(ctx context.Context, request UnlinkGoalFocusRequestObject) (UnlinkGoalFocusResponseObject, error)
 	// GetHealth Check process liveness
 	// (GET /v1/health)
 	GetHealth(ctx context.Context, request GetHealthRequestObject) (GetHealthResponseObject, error)
@@ -265,6 +2152,515 @@ type strictHandler struct {
 	options     StrictHTTPServerOptions
 }
 
+// Login operation middleware
+func (sh *strictHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var request LoginRequestObject
+
+	var body LoginJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.Login(ctx, request.(LoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Login")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LoginResponseObject); ok {
+		if err := validResponse.VisitLoginResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// Logout operation middleware
+func (sh *strictHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	var request LogoutRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.Logout(ctx, request.(LogoutRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Logout")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LogoutResponseObject); ok {
+		if err := validResponse.VisitLogoutResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCurrentSession operation middleware
+func (sh *strictHandler) GetCurrentSession(w http.ResponseWriter, r *http.Request) {
+	var request GetCurrentSessionRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCurrentSession(ctx, request.(GetCurrentSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCurrentSession")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCurrentSessionResponseObject); ok {
+		if err := validResponse.VisitGetCurrentSessionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RefreshSession operation middleware
+func (sh *strictHandler) RefreshSession(w http.ResponseWriter, r *http.Request) {
+	var request RefreshSessionRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RefreshSession(ctx, request.(RefreshSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RefreshSession")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RefreshSessionResponseObject); ok {
+		if err := validResponse.VisitRefreshSessionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListFlows operation middleware
+func (sh *strictHandler) ListFlows(w http.ResponseWriter, r *http.Request, params ListFlowsParams) {
+	var request ListFlowsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListFlows(ctx, request.(ListFlowsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListFlows")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListFlowsResponseObject); ok {
+		if err := validResponse.VisitListFlowsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateFlow operation middleware
+func (sh *strictHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
+	var request CreateFlowRequestObject
+
+	var body CreateFlowJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateFlow(ctx, request.(CreateFlowRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateFlow")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateFlowResponseObject); ok {
+		if err := validResponse.VisitCreateFlowResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateFocus operation middleware
+func (sh *strictHandler) CreateFocus(w http.ResponseWriter, r *http.Request) {
+	var request CreateFocusRequestObject
+
+	var body CreateFocusJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateFocus(ctx, request.(CreateFocusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateFocus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateFocusResponseObject); ok {
+		if err := validResponse.VisitCreateFocusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteFocus operation middleware
+func (sh *strictHandler) DeleteFocus(w http.ResponseWriter, r *http.Request, id FocusID) {
+	var request DeleteFocusRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteFocus(ctx, request.(DeleteFocusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteFocus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteFocusResponseObject); ok {
+		if err := validResponse.VisitDeleteFocusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetFocus operation middleware
+func (sh *strictHandler) GetFocus(w http.ResponseWriter, r *http.Request, id FocusID, params GetFocusParams) {
+	var request GetFocusRequestObject
+
+	request.Id = id
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetFocus(ctx, request.(GetFocusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetFocus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetFocusResponseObject); ok {
+		if err := validResponse.VisitGetFocusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateFocus operation middleware
+func (sh *strictHandler) UpdateFocus(w http.ResponseWriter, r *http.Request, id FocusID) {
+	var request UpdateFocusRequestObject
+
+	request.Id = id
+
+	var body UpdateFocusJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateFocus(ctx, request.(UpdateFocusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateFocus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateFocusResponseObject); ok {
+		if err := validResponse.VisitUpdateFocusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListFocusChildren operation middleware
+func (sh *strictHandler) ListFocusChildren(w http.ResponseWriter, r *http.Request, id FocusID, params ListFocusChildrenParams) {
+	var request ListFocusChildrenRequestObject
+
+	request.Id = id
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListFocusChildren(ctx, request.(ListFocusChildrenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListFocusChildren")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListFocusChildrenResponseObject); ok {
+		if err := validResponse.VisitListFocusChildrenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListFocusGoals operation middleware
+func (sh *strictHandler) ListFocusGoals(w http.ResponseWriter, r *http.Request, id FocusID, params ListFocusGoalsParams) {
+	var request ListFocusGoalsRequestObject
+
+	request.Id = id
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListFocusGoals(ctx, request.(ListFocusGoalsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListFocusGoals")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListFocusGoalsResponseObject); ok {
+		if err := validResponse.VisitListFocusGoalsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateGoal operation middleware
+func (sh *strictHandler) CreateGoal(w http.ResponseWriter, r *http.Request, id FocusID) {
+	var request CreateGoalRequestObject
+
+	request.Id = id
+
+	var body CreateGoalJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateGoal(ctx, request.(CreateGoalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateGoal")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateGoalResponseObject); ok {
+		if err := validResponse.VisitCreateGoalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteGoal operation middleware
+func (sh *strictHandler) DeleteGoal(w http.ResponseWriter, r *http.Request, id GoalID) {
+	var request DeleteGoalRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteGoal(ctx, request.(DeleteGoalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteGoal")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteGoalResponseObject); ok {
+		if err := validResponse.VisitDeleteGoalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetGoal operation middleware
+func (sh *strictHandler) GetGoal(w http.ResponseWriter, r *http.Request, id GoalID) {
+	var request GetGoalRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetGoal(ctx, request.(GetGoalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetGoal")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetGoalResponseObject); ok {
+		if err := validResponse.VisitGetGoalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateGoal operation middleware
+func (sh *strictHandler) UpdateGoal(w http.ResponseWriter, r *http.Request, id GoalID) {
+	var request UpdateGoalRequestObject
+
+	request.Id = id
+
+	var body UpdateGoalJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateGoal(ctx, request.(UpdateGoalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateGoal")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateGoalResponseObject); ok {
+		if err := validResponse.VisitUpdateGoalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// LinkGoalFocus operation middleware
+func (sh *strictHandler) LinkGoalFocus(w http.ResponseWriter, r *http.Request, id GoalID) {
+	var request LinkGoalFocusRequestObject
+
+	request.Id = id
+
+	var body LinkGoalFocusJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.LinkGoalFocus(ctx, request.(LinkGoalFocusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "LinkGoalFocus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LinkGoalFocusResponseObject); ok {
+		if err := validResponse.VisitLinkGoalFocusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnlinkGoalFocus operation middleware
+func (sh *strictHandler) UnlinkGoalFocus(w http.ResponseWriter, r *http.Request, id GoalID, focusId UUID) {
+	var request UnlinkGoalFocusRequestObject
+
+	request.Id = id
+	request.FocusId = focusId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnlinkGoalFocus(ctx, request.(UnlinkGoalFocusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnlinkGoalFocus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnlinkGoalFocusResponseObject); ok {
+		if err := validResponse.VisitUnlinkGoalFocusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetHealth operation middleware
 func (sh *strictHandler) GetHealth(w http.ResponseWriter, r *http.Request) {
 	var request GetHealthRequestObject
@@ -294,16 +2690,49 @@ func (sh *strictHandler) GetHealth(w http.ResponseWriter, r *http.Request) {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"ZJJRT9wwDMe/SuTtsbQdvKC8IQYDCU0nxhu6h5C6bSBNsti92+nU7z6518HteGrj2M7ff//2YOOQYsDA",
-	"BHoPZHsczPx7h8Zz/4iUYiCUiGkaxy4G41c5JszskEC3xhMWkI5CeyA2PM5/GMYB9DPEN1gXwLuEoIE4",
-	"u9DBNBWQ8ffoMjaSs1R95MWXV7QMkyS60EZp2CDZ7JIIAQ2PmCI5jnmn2jiGxkhc2Rg4G8ul+h4H44IS",
-	"bfMVKZNRmabB5j3rrHWZWHHskHvMauu4V1ere7WN+a2EAryzuHgQzCDCrpKxPZ6dlzUUMGYPGnrmRLqq",
-	"ttttaebrMuauWmqperi/vvn562aumQpgx1463UY70q2PW3kRCthgpsNodVkfUmPCYJIDDRdlXV5AAclw",
-	"P7tbbb5V/bwoOXXInx1ajS/eWeXdBgMSKdujfRNjkFSIfDirGLroQqcaw+bFEKqMpnFSIAa823ffgIYf",
-	"yAc4QNZ34GNWc17X8hFfMcxSTEre2bm0eiXRswf8Y4bk8RgToWMqFvrk4mvGFjR8qT7wrBY2qxMwZzj+",
-	"H/mpR3X39LRShHmDWTlSeQzBha6cmSO0Y3a8A/28LoDGYTB5BxquZytSjlaM+ucYFMCmIwF0GXs9HbpI",
-	"c4mfWv4QrfGqwQ36mAax4hgSXVVeEvpIrC/ryxqm9fsTn7Z3IkaZljErGq2E29GrI4sVsck8JlnZAuqi",
-	"eFpPfwMAAP//",
+	"5Ftfb+M2Ev8qBO8etbbTboHCb7mk2Qa3bYNN9h4uCG4ZcSyxkUiVpOLNBf7uB/6RTFmSLSV21ot7iiPx",
+	"z8z8fpwZcqhnHIu8EBy4Vnj+jAsiSQ4apP3vrJRKSPOLcTzHf5Ugn3CEOckBz3Hs3kZYxSnkxDTLGf8I",
+	"PNEpnp9EWD8Vpp3SkvEEr1YRPofCvHvGFFQsWaGZMAOfg4qBU8I1oqYF0gIxHmclBbQQEsUpyyi6EHGp",
+	"kJYAaoL+DVKgHAhXiAtE1wOY9wi+FoQrJvgER52y22kaolNYkDLTeD6LcE6+srzM8fynyKjkfs9qhRjX",
+	"kIC0GlmhLs9rGxXEjuunYRRHWMJfJZNA8VzLEsI5/y5hgef4b9M1CFP3Vk0/f748tzN8ECQ76ASXztJt",
+	"WM5EnpN3CgwpNFAkIbN/KdEkgGiCzkopgWukyqIQ0jR5JFkJChEJ6EsiSKa+IMIp+mKRlMC/9AHjx2xA",
+	"A19JXmTmrR0qqgbBXRT7yHKm+yib2ZedsP8U4n4ymwXIn3QgvzJmV4XgCuxS+V3oC1Fyan7HgmvgVghS",
+	"FBmLiTHo9E9lrPo8EJ5fpBTyk5/CTdhE5yYFZJAH5bBRopQxoCUxK0KjhZFmglcR/sxJqVMh2X/hDcU7",
+	"LXUKXPvREVMoZ0oxnkSI8UeSMRohIc1KNdSdWOz84GZu070e3khKKTMDkexKigKkZsbuC5IpiHARPHrG",
+	"CpRiTpdtGpgZrn1TB2e1im7rIe5q5MX9nxBrY86w3zjBnK7qVO8S7YbloDTJCzNfqUDuXMvKu6NQCdsx",
+	"Cmbt0uZMAtFwkYnlJ8elkTrFInMRgpdZRu7NKnVOaGNlbtBjQPsFAL0n8cOgxm597whAEVaa6FLtsqb1",
+	"6deu6SrCmiS2C9OQ2x+tYf0DIiV5asFgRdtiejNZaPss+2OB57fbRWzDtopG4VYQ47EvrUNYCJkTjee4",
+	"LG082WHtVUuXu1obE6xeRqQNeuwAMmP8AagLvrSJzu6YtwlYxYs/HkFK5iIhcOP5bzGjQHCEi4xwDsY4",
+	"JNbs0cSngpTKPlkSpo1YEaaCmzcx4TFkGVAD+07qugfb5TZmvTHtNsllOzfXVhfVmt567AqnQ5ZWDkqR",
+	"ZEhLH7Qc93ZzLVTXyrKeq0tVy4mxKlYJxVAeuUk6iDTcHcZ2vdCRweCgTnTBOFNpJVPtFSjR8E6zHPAA",
+	"NtsMbbAdDa+7zMjo0JU80PG/wt29UdSIcFnQ0YzYWB9Wn1pXb51aAS9Uk0UBRyr6VihGOMi013wNJW2Q",
+	"pnc5nmVA5AWDjIauNZBzh0B3HaDYga+8xxnlzkqX+27b2EU4Jeo3ISEA7l6IDAi39KwwfZ2z4PBVr7fY",
+	"4zyhmzny6jTGWgvfC8gLQ8Gi8q0D1N2Q13XtFei6XmJ7C7wtxlhnM5Is+3DSO1zTPrzucH+558RJLDlI",
+	"P9rQMQopEglqUHC4qtp+V0na/nx5w75RV7rXsksL48DiL3bjRrduL74xe9/C+y48dV868k0cdYP+I/dS",
+	"gsPZMOs5rgxs7LC2jbeItGuUlqYaZM44yQZJsWHeUP7NkaLAEBvC9xn8hYEx8aFlN7k2xLcd+4S58U6n",
+	"Tpgky4k9zlQQC07N76719iuQ7OWnZ61ILB46Ztk8MHO9ujT5yPiD0aZ10DEy7xgaYLoSj0vaLZpIGH+Z",
+	"SAVRaikkHRDgSwVy0Dal4/zOJ/D1bF1arENIX/7QEslaqmMr1G5oQ8Qo6HLGw6cnLbdeh5GRKXQQf7bt",
+	"vHcdPG7dI7/0YDHcXw7Jgd7qILJFFgfomGO6Q+C5kU50wHlkx4FjUBp7ntfGyJ/4j3BHwzcAL/VG1j/U",
+	"ndt+aGWjUimZfro2U1Y5nHhgcFq6qq8tyblH65qcddCLTCz/U1Vd1oAU7J/w5KpLjC9Eu0RpbX+RiSVK",
+	"gINkMTIrGThFv/3rCsWCa0liPbFJcQw+GvqJTwsSp/Duh8nMaCYzPMep1oWaT6fL5XJC7OuJkMnU91XT",
+	"j5dnv/x+/YvtY5Bj2pYl11KcXl3iCD+CdOUhPJucuKaiAE4Khuf4x8ls8qP16Tq1Npo+nkxJqdNpZsKR",
+	"DS7CrUuDsC2fGcfiohWuz0//IejT3sp5jUi4amJvstzNcucPs9ne5m6U+joqiVY2pMo4BqBAbSHZUwU5",
+	"MtmiJ1OqBFfxfD876Zu01mLaKIuG9MXz27sIqzK3yZadHzGOlkynhlELlpQSKIolUOCauZMy55tv8VV5",
+	"n7HYEv7ODBqCK0q9FV3zvmXn923Su6aoatjUfosi1uMinQKKq4J9w4xD1HCOI4EODT6A9hcBruuF/M1I",
+	"c9bUcD+0aPqz27tVw7wfQDeMS9YVcKgZG9jYuPkOC0tYSFBpP1M+uQZHYGQvgiWgF3tfK3C7qb0JEKmM",
+	"nT0he6egw8xdVDbhRvUS+SNT+sK2iBoXonpqsusmU3f5ZBXtbOhPAAa0rG7nDGjqblcZSx2MEetT9w46",
+	"fBJC+1taBUngLYhgoEKynhdCV+wgvDPZeec6WtfQDxRUO4r0QyLryX7R2raAA8T8weBbgObsgkgAXAds",
+	"1VL1uPa6w+AaxWFxDDfBxwbkt8PQ3c0UsgdMj94mnNNnRlcus8lAQxvVc/u8Gm6cF67uZHZ4wvc9Wwik",
+	"ynt7c9TJ82ITmk7vd3eqbwuOsrmzCSKoIXKntaPeFO2VJv0uA9bulUOSREJCNBwl8CazrFCvJe3BvSA6",
+	"TtvIBwd5r1xP+/evHYeMb7wFHcgSXzA7So44I1Y0GeqCp+HVp/5k2B6/ru+CHMx3/H/nz2fBZw6vSaAP",
+	"yjObcQcfZMBwrtV3w7YT7YO/fHQ8LDskI+rieAchzLsjZ4IFC4klB4runzrcj0Nz1y7MFkePLS61rzS/",
+	"cdrfqEj38eOVSf9BKVLvEqykA1ji3Yb1FAP3CC+ijv+oatgOwQr/XWwMvC3aa69vN7Bn483elPpHnKv3",
+	"ArE1PX89GodKzkc7wbdlwveRmfeQouXzdp95Ne7UHBtjOi/8HBlpjIxHHTmtgD5uajEmYq5zbn/1aWsM",
+	"/cyzvXAp6vw8eVHfXH3VN8p335opEnLxeKRM+WRl81x5p8U7t4E0sPbTJbVXBIO9WFNpVzNDGXsEDkqh",
+	"OIX4YYLOBbiPi+3/SPBEMJ7Y78HviQIkgVBmOkxw1M413LXEl9Ur60/A1xcUsXjAq6FE2rgS2fM59a83",
+	"N1dIgXwEiZhCsuSc8WRHUd2aopAiNoaqLBZY3qt9t3KjmMHdytos6sc2y3yETBQ52Cur60sp8+k0Mw1S",
+	"ofT859nPM+u9/RQt9DaEQWShQbobFEotygwFJkZKE6nLYrJetV5is6Y7aUGan3aH9zGA00IwrlUwXFCA",
+	"bQ952iiSl8rIuWWsumbeHimoZdXUC7u6ulK7n+uSMpBExulTT2cfkdvd3c6mq49bcqu71f8CAAD//w==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

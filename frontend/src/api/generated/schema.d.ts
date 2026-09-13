@@ -24,17 +24,383 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Log in with configured credentials */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clear the current session cookie */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh a currently valid session */
+        post: operations["refreshSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the current authenticated session */
+        get: operations["getCurrentSession"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/flows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List root Focuses */
+        get: operations["listFlows"];
+        put?: never;
+        /** Create a root Focus */
+        post: operations["createFlow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/focuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a child or root Focus */
+        post: operations["createFocus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/focuses/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a Focus aggregate */
+        get: operations["getFocus"];
+        put?: never;
+        post?: never;
+        /** Delete a Focus subtree */
+        delete: operations["deleteFocus"];
+        options?: never;
+        head?: never;
+        /** Update a Focus */
+        patch: operations["updateFocus"];
+        trace?: never;
+    };
+    "/v1/focuses/{id}/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List child Focuses */
+        get: operations["listFocusChildren"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/focuses/{id}/goals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Goals owned by a Focus */
+        get: operations["listFocusGoals"];
+        put?: never;
+        /** Create a Goal owned by a Focus */
+        post: operations["createGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/goals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a Goal */
+        get: operations["getGoal"];
+        put?: never;
+        post?: never;
+        /** Delete a Goal */
+        delete: operations["deleteGoal"];
+        options?: never;
+        head?: never;
+        /** Update a Goal */
+        patch: operations["updateGoal"];
+        trace?: never;
+    };
+    "/v1/goals/{id}/focuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Link a Goal to a Focus */
+        post: operations["linkGoalFocus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/goals/{id}/focuses/{focusId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a Goal-to-Focus link */
+        delete: operations["unlinkGoalFocus"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Format: uuid */
+        UUID: string;
+        /** Format: date-time */
+        Timestamp: string;
         HealthResponse: {
             /** @enum {string} */
             status: "ok";
         };
+        ErrorResponse: {
+            code: string;
+            message: string;
+            requestId?: string | null;
+        };
+        User: {
+            id: components["schemas"]["UUID"];
+            username: string;
+        };
+        AuthSession: {
+            user: components["schemas"]["User"];
+            expiresAt: components["schemas"]["Timestamp"];
+        };
+        LoginRequest: {
+            username: string;
+            password: string;
+        };
+        AuthResponse: {
+            session: components["schemas"]["AuthSession"];
+        };
+        /** @enum {string} */
+        FocusStatus: "idea" | "planned" | "active" | "paused" | "waiting" | "done" | "cancelled";
+        /** @enum {string} */
+        GoalType: "primary" | "secondary";
+        GoalProgress: {
+            linkedCount: number;
+            terminalCount: number;
+            doneCount: number;
+            statusCounts: {
+                [key: string]: number;
+            };
+        };
+        Goal: {
+            id: components["schemas"]["UUID"];
+            ownerFocusId: components["schemas"]["UUID"];
+            type: components["schemas"]["GoalType"];
+            description: string;
+            /** @enum {string|null} */
+            statusOverride: "idea" | "planned" | "active" | "paused" | "waiting" | "done" | "cancelled" | null;
+            linkedFocusIds: components["schemas"]["UUID"][];
+            progress: components["schemas"]["GoalProgress"];
+            createdAt: components["schemas"]["Timestamp"];
+            updatedAt: components["schemas"]["Timestamp"];
+            /** Format: date-time */
+            finishedAt: string | null;
+        };
+        Focus: {
+            id: components["schemas"]["UUID"];
+            /** Format: uuid */
+            parentId: string | null;
+            name: string;
+            status: components["schemas"]["FocusStatus"];
+            tags: string[];
+            description: string | null;
+            feedback: string | null;
+            color: string | null;
+            goals: components["schemas"]["Goal"][];
+            children: components["schemas"]["Focus"][];
+            createdAt: components["schemas"]["Timestamp"];
+            updatedAt: components["schemas"]["Timestamp"];
+            /** Format: date-time */
+            finishedAt: string | null;
+        };
+        CreateFlowRequest: {
+            name: string;
+            status?: components["schemas"]["FocusStatus"];
+            tags?: string[];
+            description?: string | null;
+            feedback?: string | null;
+            color?: string | null;
+        };
+        CreateFocusRequest: components["schemas"]["CreateFlowRequest"] & {
+            /** Format: uuid */
+            parentId?: string | null;
+        };
+        /** @enum {string} */
+        FocusClearField: "parentId" | "description" | "feedback" | "color";
+        UpdateFocusRequest: {
+            parentId?: components["schemas"]["UUID"];
+            name?: string;
+            status?: components["schemas"]["FocusStatus"];
+            tags?: string[];
+            description?: string;
+            feedback?: string;
+            color?: string;
+            clearFields?: components["schemas"]["FocusClearField"][];
+        };
+        FocusResponse: {
+            focus: components["schemas"]["Focus"];
+        };
+        FocusPage: {
+            items: components["schemas"]["Focus"][];
+            count: number;
+            nextCursor: string | null;
+            hasMore: boolean;
+        };
+        CreateGoalRequest: {
+            type: components["schemas"]["GoalType"];
+            description: string;
+            /** @enum {string|null} */
+            statusOverride?: "idea" | "planned" | "active" | "paused" | "waiting" | "done" | "cancelled" | null;
+            linkedFocusIds?: components["schemas"]["UUID"][];
+        };
+        /** @enum {string} */
+        GoalClearField: "statusOverride";
+        UpdateGoalRequest: {
+            type?: components["schemas"]["GoalType"];
+            description?: string;
+            statusOverride?: components["schemas"]["FocusStatus"];
+            linkedFocusIds?: components["schemas"]["UUID"][];
+            clearFields?: components["schemas"]["GoalClearField"][];
+        };
+        GoalResponse: {
+            goal: components["schemas"]["Goal"];
+        };
+        GoalPage: {
+            items: components["schemas"]["Goal"][];
+            count: number;
+            nextCursor: string | null;
+            hasMore: boolean;
+        };
+        LinkGoalFocusRequest: {
+            focusId: components["schemas"]["UUID"];
+        };
     };
-    responses: never;
-    parameters: never;
+    responses: {
+        /** @description Authentication is missing, invalid, or expired. */
+        Unauthorized: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description The requested resource was not found. */
+        NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+    };
+    parameters: {
+        FocusID: components["schemas"]["UUID"];
+        GoalID: components["schemas"]["UUID"];
+        Limit: number;
+        Cursor: string;
+        /** @description Comma-separated related data to include. Current supported values are `goals` and `children`. */
+        Include: string;
+        /** @description Descendant depth to include for child Focus trees. Zero means no descendant tree expansion. */
+        Depth: number;
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
@@ -64,6 +430,461 @@ export interface operations {
                     "application/json": components["schemas"]["HealthResponse"];
                 };
             };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Login succeeded and session cookie was issued. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Logout response was issued. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    refreshSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session was refreshed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getCurrentSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current session. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    listFlows: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                cursor?: components["parameters"]["Cursor"];
+                /** @description Comma-separated related data to include. Current supported values are `goals` and `children`. */
+                include?: components["parameters"]["Include"];
+                /** @description Descendant depth to include for child Focus trees. Zero means no descendant tree expansion. */
+                depth?: components["parameters"]["Depth"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Root Focus page. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FocusPage"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    createFlow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFlowRequest"];
+            };
+        };
+        responses: {
+            /** @description Root Focus created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FocusResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    createFocus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFocusRequest"];
+            };
+        };
+        responses: {
+            /** @description Focus created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FocusResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getFocus: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated related data to include. Current supported values are `goals` and `children`. */
+                include?: components["parameters"]["Include"];
+                /** @description Descendant depth to include for child Focus trees. Zero means no descendant tree expansion. */
+                depth?: components["parameters"]["Depth"];
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["FocusID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Focus aggregate. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FocusResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteFocus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["FocusID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Focus subtree deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateFocus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["FocusID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateFocusRequest"];
+            };
+        };
+        responses: {
+            /** @description Focus updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FocusResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listFocusChildren: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                cursor?: components["parameters"]["Cursor"];
+                /** @description Comma-separated related data to include. Current supported values are `goals` and `children`. */
+                include?: components["parameters"]["Include"];
+                /** @description Descendant depth to include for child Focus trees. Zero means no descendant tree expansion. */
+                depth?: components["parameters"]["Depth"];
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["FocusID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Child Focus page. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FocusPage"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listFocusGoals: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                cursor?: components["parameters"]["Cursor"];
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["FocusID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Goal page. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalPage"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    createGoal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["FocusID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGoalRequest"];
+            };
+        };
+        responses: {
+            /** @description Goal created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getGoal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["GoalID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Goal. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteGoal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["GoalID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Goal deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateGoal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["GoalID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGoalRequest"];
+            };
+        };
+        responses: {
+            /** @description Goal updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    linkGoalFocus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["GoalID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkGoalFocusRequest"];
+            };
+        };
+        responses: {
+            /** @description Link created. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    unlinkGoalFocus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["GoalID"];
+                focusId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Link removed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
         };
     };
 }

@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: FocusFlow API
-  version: 0.0.0
-  description: Repository foundation contract. Domain operations are added contract-first together with API work.
+  version: 0.1.0
+  description: FocusFlow generic backend MVP contract.
   license:
     name: Apache-2.0
     url: https://www.apache.org/licenses/LICENSE-2.0
@@ -12,6 +12,16 @@ servers:
 tags:
   - name: Health
     description: Process liveness after successful application startup.
+  - name: PublicAuth
+    description: Public authentication and session endpoints.
+  - name: UserAuth
+    description: Authenticated user session endpoints.
+  - name: Flows
+    description: Root Focus operations.
+  - name: Focuses
+    description: Focus hierarchy operations.
+  - name: Goals
+    description: Goal operations.
 paths:
   /v1/health:
     get:
@@ -29,8 +39,464 @@ paths:
                 $ref: '#/components/schemas/HealthResponse'
               example:
                 status: ok
+
+  /v1/auth/login:
+    post:
+      operationId: login
+      tags: [PublicAuth]
+      summary: Log in with configured credentials
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login succeeded and session cookie was issued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/auth/logout:
+    post:
+      operationId: logout
+      tags: [PublicAuth]
+      summary: Clear the current session cookie
+      security: []
+      responses:
+        '204':
+          description: Logout response was issued.
+
+  /v1/auth/refresh:
+    post:
+      operationId: refreshSession
+      tags: [PublicAuth]
+      summary: Refresh a currently valid session
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Session was refreshed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/auth/me:
+    get:
+      operationId: getCurrentSession
+      tags: [UserAuth]
+      summary: Get the current authenticated session
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Current session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/flows:
+    get:
+      operationId: listFlows
+      tags: [Flows]
+      summary: List root Focuses
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Include'
+        - $ref: '#/components/parameters/Depth'
+      responses:
+        '200':
+          description: Root Focus page.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FocusPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createFlow
+      tags: [Flows]
+      summary: Create a root Focus
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFlowRequest'
+      responses:
+        '201':
+          description: Root Focus created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FocusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/focuses:
+    post:
+      operationId: createFocus
+      tags: [Focuses]
+      summary: Create a child or root Focus
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFocusRequest'
+      responses:
+        '201':
+          description: Focus created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FocusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/focuses/{id}:
+    get:
+      operationId: getFocus
+      tags: [Focuses]
+      summary: Get a Focus aggregate
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FocusID'
+        - $ref: '#/components/parameters/Include'
+        - $ref: '#/components/parameters/Depth'
+      responses:
+        '200':
+          description: Focus aggregate.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FocusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: updateFocus
+      tags: [Focuses]
+      summary: Update a Focus
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FocusID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFocusRequest'
+      responses:
+        '200':
+          description: Focus updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FocusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteFocus
+      tags: [Focuses]
+      summary: Delete a Focus subtree
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FocusID'
+      responses:
+        '204':
+          description: Focus subtree deleted.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/focuses/{id}/children:
+    get:
+      operationId: listFocusChildren
+      tags: [Focuses]
+      summary: List child Focuses
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FocusID'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Include'
+        - $ref: '#/components/parameters/Depth'
+      responses:
+        '200':
+          description: Child Focus page.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FocusPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/focuses/{id}/goals:
+    get:
+      operationId: listFocusGoals
+      tags: [Goals]
+      summary: List Goals owned by a Focus
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FocusID'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Goal page.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      operationId: createGoal
+      tags: [Goals]
+      summary: Create a Goal owned by a Focus
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FocusID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGoalRequest'
+      responses:
+        '201':
+          description: Goal created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/goals/{id}:
+    get:
+      operationId: getGoal
+      tags: [Goals]
+      summary: Get a Goal
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GoalID'
+      responses:
+        '200':
+          description: Goal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: updateGoal
+      tags: [Goals]
+      summary: Update a Goal
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GoalID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGoalRequest'
+      responses:
+        '200':
+          description: Goal updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteGoal
+      tags: [Goals]
+      summary: Delete a Goal
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GoalID'
+      responses:
+        '204':
+          description: Goal deleted.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/goals/{id}/focuses:
+    post:
+      operationId: linkGoalFocus
+      tags: [Goals]
+      summary: Link a Goal to a Focus
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GoalID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkGoalFocusRequest'
+      responses:
+        '200':
+          description: Link created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/goals/{id}/focuses/{focusId}:
+    delete:
+      operationId: unlinkGoalFocus
+      tags: [Goals]
+      summary: Remove a Goal-to-Focus link
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GoalID'
+        - name: focusId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Link removed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: focusflow_session
+  parameters:
+    FocusID:
+      name: id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    GoalID:
+      name: id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+    Include:
+      name: include
+      in: query
+      required: false
+      description: Comma-separated related data to include. Current supported values are `goals` and `children`.
+      schema:
+        type: string
+        example: goals,children
+    Depth:
+      name: depth
+      in: query
+      required: false
+      description: Descendant depth to include for child Focus trees. Zero means no descendant tree expansion.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 5
+        default: 0
+  responses:
+    Unauthorized:
+      description: Authentication is missing, invalid, or expired.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    UUID:
+      type: string
+      format: uuid
+
+    Timestamp:
+      type: string
+      format: date-time
+
     HealthResponse:
       type: object
       additionalProperties: false
@@ -39,3 +505,387 @@ components:
         status:
           type: string
           enum: [ok]
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          minLength: 1
+        requestId:
+          type: string
+          nullable: true
+
+    User:
+      type: object
+      additionalProperties: false
+      required: [id, username]
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        username:
+          type: string
+          minLength: 1
+
+    AuthSession:
+      type: object
+      additionalProperties: false
+      required: [user, expiresAt]
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        expiresAt:
+          $ref: '#/components/schemas/Timestamp'
+
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+
+    AuthResponse:
+      type: object
+      additionalProperties: false
+      required: [session]
+      properties:
+        session:
+          $ref: '#/components/schemas/AuthSession'
+
+    FocusStatus:
+      type: string
+      enum:
+        - idea
+        - planned
+        - active
+        - paused
+        - waiting
+        - done
+        - cancelled
+
+    GoalType:
+      type: string
+      enum:
+        - primary
+        - secondary
+
+    GoalProgress:
+      type: object
+      additionalProperties: false
+      required: [linkedCount, terminalCount, doneCount, statusCounts]
+      properties:
+        linkedCount:
+          type: integer
+          minimum: 0
+        terminalCount:
+          type: integer
+          minimum: 0
+        doneCount:
+          type: integer
+          minimum: 0
+        statusCounts:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+
+    Goal:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - ownerFocusId
+        - type
+        - description
+        - statusOverride
+        - linkedFocusIds
+        - progress
+        - createdAt
+        - updatedAt
+        - finishedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        ownerFocusId:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/GoalType'
+        description:
+          type: string
+          minLength: 1
+        statusOverride:
+          type: string
+          nullable: true
+          enum:
+            - idea
+            - planned
+            - active
+            - paused
+            - waiting
+            - done
+            - cancelled
+        linkedFocusIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/UUID'
+        progress:
+          $ref: '#/components/schemas/GoalProgress'
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        updatedAt:
+          $ref: '#/components/schemas/Timestamp'
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Focus:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - parentId
+        - name
+        - status
+        - tags
+        - description
+        - feedback
+        - color
+        - goals
+        - children
+        - createdAt
+        - updatedAt
+        - finishedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+        status:
+          $ref: '#/components/schemas/FocusStatus'
+        tags:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+          nullable: true
+        feedback:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        goals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Goal'
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/Focus'
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        updatedAt:
+          $ref: '#/components/schemas/Timestamp'
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateFlowRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        status:
+          $ref: '#/components/schemas/FocusStatus'
+        tags:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+          nullable: true
+        feedback:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+
+    CreateFocusRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateFlowRequest'
+        - type: object
+          additionalProperties: false
+          properties:
+            parentId:
+              type: string
+              format: uuid
+              nullable: true
+
+    FocusClearField:
+      type: string
+      enum:
+        - parentId
+        - description
+        - feedback
+        - color
+
+    UpdateFocusRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        parentId:
+          $ref: '#/components/schemas/UUID'
+        name:
+          type: string
+          minLength: 1
+        status:
+          $ref: '#/components/schemas/FocusStatus'
+        tags:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        feedback:
+          type: string
+        color:
+          type: string
+        clearFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FocusClearField'
+
+    FocusResponse:
+      type: object
+      additionalProperties: false
+      required: [focus]
+      properties:
+        focus:
+          $ref: '#/components/schemas/Focus'
+
+    FocusPage:
+      type: object
+      additionalProperties: false
+      required: [items, count, nextCursor, hasMore]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Focus'
+        count:
+          type: integer
+          minimum: 0
+        nextCursor:
+          type: string
+          nullable: true
+        hasMore:
+          type: boolean
+
+    CreateGoalRequest:
+      type: object
+      additionalProperties: false
+      required: [type, description]
+      properties:
+        type:
+          $ref: '#/components/schemas/GoalType'
+        description:
+          type: string
+          minLength: 1
+        statusOverride:
+          type: string
+          nullable: true
+          enum:
+            - idea
+            - planned
+            - active
+            - paused
+            - waiting
+            - done
+            - cancelled
+        linkedFocusIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/UUID'
+
+    GoalClearField:
+      type: string
+      enum:
+        - statusOverride
+
+    UpdateGoalRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        type:
+          $ref: '#/components/schemas/GoalType'
+        description:
+          type: string
+          minLength: 1
+        statusOverride:
+          $ref: '#/components/schemas/FocusStatus'
+        linkedFocusIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/UUID'
+        clearFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoalClearField'
+
+    GoalResponse:
+      type: object
+      additionalProperties: false
+      required: [goal]
+      properties:
+        goal:
+          $ref: '#/components/schemas/Goal'
+
+    GoalPage:
+      type: object
+      additionalProperties: false
+      required: [items, count, nextCursor, hasMore]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Goal'
+        count:
+          type: integer
+          minimum: 0
+        nextCursor:
+          type: string
+          nullable: true
+        hasMore:
+          type: boolean
+
+    LinkGoalFocusRequest:
+      type: object
+      additionalProperties: false
+      required: [focusId]
+      properties:
+        focusId:
+          $ref: '#/components/schemas/UUID'

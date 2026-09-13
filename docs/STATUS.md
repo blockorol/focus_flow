@@ -72,11 +72,12 @@ Blocked locally:
 - Hosted GitHub Actions has not been run or verified for this revision.
 - Railway and Vercel project settings have not been configured or verified.
 - The frontend package lock was adjusted after removing an accidental root file dependency, but the lockfile should be regenerated/validated with npm after TLS interception is fixed.
-- No BE full MVP implementation has started after the planning reset.
+- BE full MVP point 1 backend models are complete.
+- BE full MVP point 2 and point 3 API contract/stub work is complete in the working tree.
 
 ## Next action
 
-BE full MVP point 1 is complete and awaiting review/commit checkpoint. Do not start point 2 converters/builders until the user approves continuing. Backend validation for this point used native Go commands directly, not npm wrappers.
+BE full MVP point 2 and point 3 API contract/stub work is complete and awaiting review/commit checkpoint. Do not start auth service implementation until the user approves continuing. Backend validation for this point used native Go commands directly, not npm wrappers.
 
 ## BE full MVP point 1 result
 
@@ -96,7 +97,6 @@ Validation:
 - `go tool staticcheck ./...`.
 - `go build -o .tmp/check-backend/api.exe ./cmd/api`.
 - `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`.
-
 Not done in point 1:
 
 - no converters/builders;
@@ -105,3 +105,37 @@ Not done in point 1:
 - no service layer;
 - no migrations or PostgreSQL queries;
 - no frontend product work.
+
+## BE full MVP point 2 and point 3 result
+
+Completed:
+
+- Expanded the OpenAPI contract to the generic backend MVP API surface.
+- Generated Go API code and synchronized generated TypeScript API types from the contract.
+- Added API boundary model aliases and explicit converters between API and internal models.
+- Added public API and user API handler separation.
+- Added deterministic mock responses for all current API endpoints.
+- Added temporary userID context middleware shell for user API stubs.
+- Kept typed Specifications out of the API until Specification variants are approved and implemented end-to-end.
+
+Validation:
+
+- `go tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml`.
+- Generated drift check by regenerating and comparing `backend/internal/api/generated/openapi.gen.go` and `frontend/src/api/generated/schema.d.ts`.
+- `gofmt -w internal/api`.
+- `go test ./...`.
+- `go vet ./...`.
+- `go tool staticcheck ./...`.
+- `go build -o .tmp/check-backend/api.exe ./cmd/api`.
+- `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`.
+- `npm run contract:lint`.
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend test -- --run`.
+
+Not done in this point:
+
+- no real auth verification;
+- no service layer;
+- no storage interfaces or PostgreSQL implementation;
+- no migrations;
+- no frontend UI/client work.

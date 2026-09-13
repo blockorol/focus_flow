@@ -1,6 +1,6 @@
 # Phase 1 - BE full MVP
 
-Status: approved for point 1 on 2026-09-08. Implement only backend models without logic until the next checkpoint.
+Status: point 1 complete; point 2 and point 3 API contract/stub work complete and awaiting review on 2026-09-08.
 
 ## Goal
 
@@ -130,16 +130,16 @@ Converter/builder style:
 
 ### 2. Converters/builders
 
-- [ ] **Goal:** add explicit boundary conversion functions between generated API models, internal/core models, and PostgreSQL-local storage models.
+- [x] **Goal:** add explicit boundary conversion functions between generated API models and internal/core models. PostgreSQL storage converters remain for the PostgreSQL implementation point.
 - **Files/packages expected to change:** API mapping packages under `backend/internal/api/`; PostgreSQL mapping files under `backend/internal/storage/postgres/`; tests for conversions.
-- **Commands/checks:** `npm run check:backend`; focused mapper tests; generated drift check when OpenAPI changes.
-- **Acceptance criteria:** mappings are explicit; failing conversions return errors; optional/null fields and enums are covered; no reflection/generic mapper library; internal/core code remains independent of API and PostgreSQL packages.
+- **Commands/checks:** `gofmt -w internal/api`; `go test ./...`; `go vet ./...`; `go tool staticcheck ./...`; `go build -o .tmp/check-backend/api.exe ./cmd/api`; `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`; focused mapper tests; generated drift check when OpenAPI changes.
+- **Acceptance criteria:** mappings are explicit; optional/null fields and enums are covered; no reflection/generic mapper library; internal/core code remains independent of API packages. PostgreSQL storage mapping is intentionally deferred until storage SQL shape is implemented.
 
 ### 3. Complete API methods as successful stubs
 
-- [ ] **Goal:** expose the full generic MVP API shape with successful mock responses only.
+- [x] **Goal:** expose the full generic MVP API shape with successful mock responses only.
 - **Files/packages expected to change:** `contracts/openapi.yaml`; generated API files; `backend/internal/api/` public/user API routing, handlers, middleware shell, response helpers, and tests.
-- **Commands/checks:** `npm run contract:lint`; `npm run generate`; `npm run check:generated`; `npm run check:backend`; HTTP handler tests for route grouping, auth-required behavior, pagination response shape, and mock success responses.
+- **Commands/checks:** `go tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml`; generated drift check; `gofmt -w internal/api`; `go test ./...`; `go vet ./...`; `go tool staticcheck ./...`; `go build -o .tmp/check-backend/api.exe ./cmd/api`; `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`; HTTP handler tests for route grouping, auth-required behavior, pagination response shape, and mock success responses.
 - **Acceptance criteria:** public and user API groups are separated; user API receives `userID` from middleware/context; handlers contain no business logic and no database access; all stubs return valid successful contract responses; every collection endpoint is cursor-paginated.
 
 ### 4. Auth service and middleware
@@ -200,3 +200,16 @@ Converter/builder style:
 - Added lightweight compile/tag tests for model shape checks.
 - No converters, API stubs, auth service, middleware, service layer, migrations, SQL queries, or persistence logic were added in point 1.
 - Validation run from `backend/`: `go tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml`, `gofmt -w ...`, `go test ./...`, `go vet ./...`, `go tool staticcheck ./...`, `go build -o .tmp/check-backend/api.exe ./cmd/api`, and `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`.
+
+## Point 2 and 3 completion notes
+
+- Expanded `contracts/openapi.yaml` from health-only to the generic backend MVP API contract.
+- Added public auth endpoints for login, logout, refresh, and current session shape.
+- Added user API endpoints for root Flow listing/creation, Focus CRUD/hierarchy, Goal CRUD, and Goal-to-Focus links.
+- Kept Specifications out of the public API contract until supported typed Specification variants are approved and implemented end-to-end.
+- Added generated Go API code and synchronized generated TypeScript API types from the OpenAPI contract.
+- Added explicit API-to-internal and internal-to-API converters for Focus, Goal, auth session, pagination, request bodies, includes, and nullable clear fields.
+- Added separated public and user API handler files with deterministic mock responses only.
+- Added a temporary user-context middleware shell using the fixed mock user ID; real token validation belongs to the next auth point.
+- No service logic, auth verification, database access, migrations, PostgreSQL queries, or frontend UI work was added in this point.
+- Validation run: `npm run contract:lint`; generated drift check for Go and TypeScript OpenAPI outputs; from `backend/`, `go tool oapi-codegen -config oapi-codegen.yaml ../contracts/openapi.yaml`, `gofmt -w internal/api`, `go test ./...`, `go vet ./...`, `go tool staticcheck ./...`, `go build -o .tmp/check-backend/api.exe ./cmd/api`, and `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`; from root, `npm --prefix frontend run typecheck` and `npm --prefix frontend test -- --run`.
