@@ -312,3 +312,12 @@ Logout clears the browser cookie. The BE full MVP does not add server-side token
 `PATCH /v1/focuses/{id}` returns `409 Conflict` when the requested parent change would violate hierarchy rules, including creating a cycle.
 
 Both responses use the shared `ErrorResponse` shape.
+## D-032 - Frontend mock-first sequence and UI style
+
+**Decision:** After the BE full MVP implementation checkpoint, continue with frontend first, then backend hardening, then frontend/backend integration.
+
+The frontend MVP starts mock-first so the successful happy path can be reviewed visually before the real backend runtime is fully hardened.
+
+The first UI direction is a sidebar-based application with cards and forms. Build the frontend through reusable components and functional colors/tokens instead of ad hoc color choices.
+
+Keep mock mode as an explicit frontend API-boundary mode and keep real backend mode configurable for the later integration step.

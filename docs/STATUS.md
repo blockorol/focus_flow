@@ -34,6 +34,7 @@ Planning reset in progress. Phase 0 foundation work remains in the working tree,
 - D-028: configured-user password is read from `APP_PASSWORD` and converted to an in-memory credential/hash representation by backend auth setup.
 - D-030: auth configuration uses `APP_USER_ID`; the API session cookie is `focusflow_session`; cookie security is derived from `APP_ENV`.
 - D-031: API missing-resource and hierarchy-conflict responses.
+- D-032: frontend mock-first sequence and UI style.
 
 ## Validation run locally
 
@@ -79,10 +80,11 @@ Blocked locally:
 - BE full MVP point 4 auth service and middleware work is complete in the working tree.
 - BE full MVP point 5 service layer without database persistence is complete in the working tree.
 - BE full MVP point 6 PostgreSQL storage implementation with goose migrations is complete in the working tree.
+- Phase 2 frontend/backend/integration plan is created in `docs/exec-plans/phase-2-frontend-backend-integration.md`.
 
 ## Next action
 
-BE full MVP point 6 PostgreSQL storage implementation and its follow-up API contract refinement are complete and awaiting review/commit checkpoint. Do not start the next implementation point until the user approves continuing.
+Next planned point is Phase 2 step 1.1: Frontend design foundation. Do not start implementation until the user approves continuing.
 
 ## BE full MVP point 1 result
 
