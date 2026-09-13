@@ -82,10 +82,11 @@ Blocked locally:
 - BE full MVP point 6 PostgreSQL storage implementation with goose migrations is complete in the working tree.
 - Phase 2 frontend/backend/integration plan is created in `docs/exec-plans/phase-2-frontend-backend-integration.md`.
 - Phase 2 step 1.1 frontend design foundation is complete in the working tree.
+- Phase 2 step 1.2 API client boundary and mock mode is complete in the working tree.
 
 ## Next action
 
-Phase 2 step 1.1 frontend design foundation is complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.2: API client boundary and mock mode. Do not start implementation until the user approves continuing.
+Phase 2 steps 1.1 and 1.2 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.3: Auth UI mock-first. Do not start implementation until the user approves continuing.
 
 ## BE full MVP point 1 result
 
@@ -254,3 +255,28 @@ Not done in this step:
 - no auth UI;
 - no app shell routing;
 - no Flow, Focus, or Goal product behavior.
+## Phase 2 step 1.2 result
+
+Completed:
+
+- Added a typed frontend application API boundary with separate frontend models and generated OpenAPI DTO usage isolated to the API boundary.
+- Added real and mock API implementations behind one `FocusFlowAPI` interface; screens should consume frontend models from this interface, not generated API DTOs.
+- Added normalized frontend API errors for unauthorized, not found, conflict, and unexpected failures.
+- Added in-memory mock happy-path data and behavior for auth/session, Flows, Focuses, Goals, links, updates, deletion, and cursor pagination.
+- Added `NEXT_PUBLIC_API_MODE=mock` to the frontend environment example.
+- Added API boundary and mock client tests.
+- Added explicit API DTO/frontend model mappers and mapper tests.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+
+Not done in this step:
+
+- no login page;
+- no session UI;
+- no protected app layout;
+- no Flow, Focus, or Goal screens.

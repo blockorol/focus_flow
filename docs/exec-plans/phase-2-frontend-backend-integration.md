@@ -1,6 +1,6 @@
 # Phase 2 - Frontend MVP, backend hardening, and integration
 
-Status: step 1.1 complete and awaiting review on 2026-09-13.
+Status: steps 1.1 and 1.2 complete and awaiting review on 2026-09-13.
 
 ## Goal
 
@@ -22,7 +22,7 @@ The frontend should be reviewable early through a successful mock happy path. Ba
 
 - The BE full MVP working tree remains the backend base.
 - The OpenAPI contract remains the frontend/backend contract source of truth.
-- Frontend code uses generated OpenAPI TypeScript types instead of manually duplicated DTOs.
+- Frontend API boundary uses generated OpenAPI TypeScript types. Frontend screens and app logic use separate frontend models, with conversion to/from API DTOs inside the API boundary.
 - The frontend runs locally with Node.js.
 - The backend runs locally through Docker Compose.
 - Local PostgreSQL runs in Docker Compose, not as a host-installed service.
@@ -60,7 +60,7 @@ If backend hardening reveals a persistence model issue, stop before changing the
 
 #### 1.2 API client boundary and mock mode
 
-- [ ] **Goal:** create a typed frontend API boundary with selectable mock and real modes.
+- [x] **Goal:** create a typed frontend API boundary with selectable mock and real modes.
 - **Files/packages expected to change:** frontend API client modules, mock client/data modules, frontend env documentation/tests.
 - **Implementation notes:** support mock mode through an environment variable such as `NEXT_PUBLIC_API_MODE=mock`; keep real client shell typed by generated OpenAPI types; configure cookie-capable requests for real mode; normalize typed errors for unauthorized, not found, conflict, and generic failures.
 - **Commands/checks:** API client tests; mock client tests; frontend typecheck.
@@ -273,6 +273,28 @@ If backend hardening reveals a persistence model issue, stop before changing the
 - Updated the placeholder home page to render a small design-foundation preview using the shared components, without adding product data flow.
 - Added server-render smoke tests for the UI primitives and `cn` helper.
 - Updated Vitest config so frontend `.test.tsx` files are included.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+## Step 1.2 completion notes
+
+- Added a typed frontend application API boundary under `frontend/src/api/` with separate frontend models and generated OpenAPI DTO usage isolated to the API boundary.
+- Added `AppAPIError` normalization for unauthorized, not-found, conflict, and unexpected API failures.
+- Added `RealFocusFlowAPI` as a screen-facing wrapper around `openapi-fetch` with `credentials: "include"` preserved for cookie auth.
+- Added `MockFocusFlowAPI` with in-memory happy-path behavior for auth/session, Flows, Focuses, Goals, links, updates, deletion, cursor pagination, and expected `404`/`409` paths.
+- Added API mode selection through `NEXT_PUBLIC_API_MODE`, defaulting to real mode unless set to `mock`.
+- Updated `frontend/.env.example` to include `NEXT_PUBLIC_API_MODE=mock` for visual frontend review.
+- Kept the legacy `createAPIClient` and `getHealth` exports available through the new boundary.
+- Added tests for real transport credentials/error normalization, API mode selection, mock happy-path behavior, and API DTO/frontend model mapping.
+- Verified generated OpenAPI types are only imported by the API boundary files that directly talk to the generated client or map DTOs.
 
 Validation:
 
