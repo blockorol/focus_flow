@@ -75,10 +75,12 @@ Blocked locally:
 - The frontend package lock was adjusted after removing an accidental root file dependency, but the lockfile should be regenerated/validated with npm after TLS interception is fixed.
 - BE full MVP point 1 backend models are complete.
 - BE full MVP point 2 and point 3 API contract/stub work is complete in the working tree.
+- BE full MVP point 4 auth service and middleware work is complete in the working tree.
+- BE full MVP point 5 service layer without database persistence is complete in the working tree.
 
 ## Next action
 
-BE full MVP point 4 auth service and middleware work is complete and awaiting review/commit checkpoint. Do not start service layer implementation until the user approves continuing. Backend validation for this point used native Go commands directly, not npm wrappers.
+BE full MVP point 5 service layer without database persistence is complete and awaiting review/commit checkpoint. Do not start PostgreSQL storage implementation until the user approves continuing. Backend validation for this point used native Go commands directly, not npm wrappers.
 
 ## BE full MVP point 1 result
 
@@ -174,4 +176,32 @@ Not done in this point:
 - no service layer;
 - no storage interfaces or PostgreSQL implementation;
 - no migrations;
+- no frontend UI/client work.
+
+## BE full MVP point 5 result
+
+Completed:
+
+- Added Focus and Goal storage interfaces using internal models only.
+- Added application services for Flow, Focus, Goal, and Goal-to-Focus link use cases.
+- Added future PostgreSQL read/write comments to storage interface methods.
+- Added in-memory fake storage for current local behavior before durable persistence.
+- Wired API user handlers through services.
+- Removed API-owned mock data; temporary state now lives behind the storage boundary.
+
+Validation:
+
+- `gofmt -w internal/service internal/storage internal/api cmd/api`.
+- `go test ./...`.
+- `go vet ./...`.
+- `go tool staticcheck ./...`.
+- `go build -o .tmp/check-backend/api.exe ./cmd/api`.
+- `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`.
+
+Not done in this point:
+
+- no PostgreSQL repository implementation;
+- no SQL queries;
+- no migrations;
+- no durable persistence;
 - no frontend UI/client work.

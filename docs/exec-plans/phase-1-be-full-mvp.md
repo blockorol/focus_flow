@@ -1,6 +1,6 @@
 # Phase 1 - BE full MVP
 
-Status: point 1 complete; point 2 and point 3 complete; point 4 auth service and middleware complete and awaiting review on 2026-09-13.
+Status: points 1 through 5 complete and awaiting review on 2026-09-13.
 
 ## Goal
 
@@ -151,9 +151,9 @@ Converter/builder style:
 
 ### 5. Service layer without database persistence
 
-- [ ] **Goal:** add application services for every API use case while still using mock/in-memory storage behavior.
+- [x] **Goal:** add application services for every API use case while still using mock/in-memory storage behavior.
 - **Files/packages expected to change:** `backend/internal/service/`; storage interface definitions; API handlers wired to services; tests; comments marking intended storage reads/writes.
-- **Commands/checks:** `npm run check:backend`; service tests with fake storage; handler tests proving handlers delegate rather than implement logic.
+- **Commands/checks:** `gofmt -w internal/service internal/storage internal/api cmd/api`; `go test ./...`; `go vet ./...`; `go tool staticcheck ./...`; `go build -o .tmp/check-backend/api.exe ./cmd/api`; `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`; service tests with fake storage; handler tests proving handlers delegate rather than implement logic.
 - **Acceptance criteria:** services use internal models only; storage interfaces are use-case oriented; comments identify what each future storage call needs and why; business logic moves out of handlers; no PostgreSQL implementation is required in this point.
 
 ### 6. PostgreSQL storage implementation
@@ -223,3 +223,15 @@ Converter/builder style:
 - Login and refresh issue HttpOnly session cookies; logout expires the session cookie.
 - CRUD endpoints still return deterministic mock data only. No service layer, database access, migrations, or storage behavior was added in this point.
 - Validation run: `go test ./...`, `go vet ./...`, `go tool staticcheck ./...`, `go build -o .tmp/check-backend/api.exe ./cmd/api`, `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`, `npm run contract:lint`, Go and TypeScript generated drift checks, `npm --prefix frontend run typecheck`, `npm --prefix frontend test -- --run`, `docker compose -f docker-compose.local.yml config --quiet`, `docker compose -f docker-compose.test.yml config --quiet`, and `git diff --check`.
+
+## Point 5 completion notes
+
+- Added storage interfaces for Focus and Goal use cases under `backend/internal/storage/`; interfaces use internal models only.
+- Added application services under `backend/internal/service/` for Flow, Focus, Goal, and Goal-to-Focus link use cases.
+- Added comments on each storage interface method describing the future PostgreSQL read/write responsibility.
+- Added disposable in-memory fake storage under `backend/internal/storage/fake/` for local/service-layer behavior before PostgreSQL is implemented.
+- Wired API handlers to services instead of returning API-owned mock data directly.
+- Removed the API-owned mock data file; mock state now lives behind the storage boundary.
+- Fake storage supports process-local create, read, update, delete, child listing, goal listing, goal links, computed goal progress, and cursor pagination.
+- No PostgreSQL repository, SQL query, migration, or durable persistence was added in this point.
+- Validation run: `gofmt -w internal/service internal/storage internal/api cmd/api`, `go test ./...`, `go vet ./...`, `go tool staticcheck ./...`, `go build -o .tmp/check-backend/api.exe ./cmd/api`, and `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`.
