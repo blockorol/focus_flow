@@ -9,7 +9,7 @@ type ChildFocusCardProps = {
 
 export function ChildFocusCard({ focus }: ChildFocusCardProps) {
   return (
-    <Card>
+    <Card className="hover:shadow-card-hover">
       <CardHeader>
         <div>
           <CardTitle>{focus.name}</CardTitle>
@@ -26,7 +26,7 @@ export function ChildFocusCard({ focus }: ChildFocusCardProps) {
           </p>
           <Link
             href={`/focuses/${focus.id}`}
-            className="inline-flex h-9 items-center justify-center rounded-control border border-border bg-surface px-3 text-sm font-medium text-text-primary shadow-sm transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
+            className="inline-flex h-9 items-center justify-center rounded-control border border-border bg-surface px-3 text-sm font-medium text-text-primary shadow-sm transition hover:border-border-strong hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
           >
             Open
           </Link>
@@ -35,4 +35,3 @@ export function ChildFocusCard({ focus }: ChildFocusCardProps) {
     </Card>
   );
 }
-

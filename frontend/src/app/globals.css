@@ -2,9 +2,12 @@
 
 @theme {
   --color-app: #f7f3ed;
+  --color-app-accent: #e6faf6;
   --color-surface: #fffdfa;
   --color-surface-muted: #f0ebe3;
+  --color-surface-raised: #ffffff;
   --color-border: #ded6ca;
+  --color-border-strong: #c8bdaa;
   --color-text-primary: #252b28;
   --color-text-muted: #65716c;
   --color-text-subtle: #8a948f;
@@ -24,6 +27,7 @@
   --radius-control: 0.625rem;
   --radius-card: 1rem;
   --shadow-card: 0 18px 45px rgb(49 39 25 / 0.08);
+  --shadow-card-hover: 0 22px 60px rgb(49 39 25 / 0.12);
 }
 
 :root {
@@ -32,11 +36,18 @@
 
 body {
   margin: 0;
-  background: var(--color-app);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, var(--color-app-accent), transparent 28rem),
+    linear-gradient(180deg, var(--color-app), #fbf8f2 44rem);
   color: var(--color-text-primary);
   font-family: Arial, Helvetica, sans-serif;
 }
 
 ::selection {
   background: var(--color-success-muted);
+}
+
+a {
+  text-underline-offset: 0.18em;
 }

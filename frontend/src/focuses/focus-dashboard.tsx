@@ -130,29 +130,32 @@ export function FocusDashboard({ focusId }: FocusDashboardProps) {
       ) : null}
 
       {!loading && !error && focus ? (
-        <div className="grid gap-5 xl:grid-cols-[minmax(280px,380px)_1fr]">
-          <div className="grid content-start gap-5">
-            <FocusEditForm key={focus.id} focus={focus} onSave={updateFocus} />
-            <CreateChildFocusForm onCreate={createChild} />
-            <GoalsPanel focus={focus} goals={focus.goals} onCreate={createGoal} onSave={updateGoal} onDelete={deleteGoal} onLink={linkGoal} onUnlink={unlinkGoal} />
-          </div>
+        <div className="grid gap-5">
+          <FocusSummary focus={focus} />
 
-          <section className="grid content-start gap-4">
-            <FocusSummary focus={focus} />
-
-            <div className="grid gap-3">
-              <h2 className="text-lg font-semibold tracking-tight text-text-primary">Child Focuses</h2>
-              {focus.children.length > 0 ? (
-                <div className="grid gap-4">
-                  {focus.children.map((child) => (
-                    <ChildFocusCard key={child.id} focus={child} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState title="No child Focuses yet" description="Create a child Focus to add the next layer of work." />
-              )}
+          <div className="grid gap-5 xl:grid-cols-[minmax(280px,380px)_1fr]">
+            <div className="grid content-start gap-5">
+              <FocusEditForm key={focus.id} focus={focus} onSave={updateFocus} />
+              <CreateChildFocusForm onCreate={createChild} />
             </div>
-          </section>
+
+            <section className="grid content-start gap-5">
+              <div className="grid gap-3">
+                <h2 className="text-lg font-semibold tracking-tight text-text-primary">Child Focuses</h2>
+                {focus.children.length > 0 ? (
+                  <div className="grid gap-4">
+                    {focus.children.map((child) => (
+                      <ChildFocusCard key={child.id} focus={child} />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState title="No child Focuses yet" description="Create a child Focus to add the next layer of work." />
+                )}
+              </div>
+
+              <GoalsPanel focus={focus} goals={focus.goals} onCreate={createGoal} onSave={updateGoal} onDelete={deleteGoal} onLink={linkGoal} onUnlink={unlinkGoal} />
+            </section>
+          </div>
         </div>
       ) : null}
     </div>

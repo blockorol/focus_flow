@@ -89,10 +89,11 @@ Blocked locally:
 - Phase 2 step 1.6 Focus page UI is complete in the working tree.
 - Phase 2 step 1.7 Focus edit UI is complete in the working tree.
 - Phase 2 step 1.8 Goals UI is complete in the working tree.
+- Phase 2 step 1.9 frontend visual polish is complete in the working tree.
 
 ## Next action
 
-Phase 2 steps 1.1 through 1.8 are complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.9: Frontend visual polish. Do not start implementation until the user approves continuing.
+Phase 2 frontend MVP with mocks is complete through step 1.9 and awaiting review/commit checkpoint. Next planned point is Phase 2 step 2.1: Docker Compose runtime verification. Do not start implementation until the user approves continuing.
 
 ## BE full MVP point 1 result
 
@@ -440,4 +441,28 @@ Validation:
 Not done in this step:
 
 - no frontend visual polish pass;
+- no real backend integration.
+
+## Phase 2 step 1.9 result
+
+Completed:
+
+- Polished the app background, app shell, sidebar, session summary, page header, shared cards, form controls, and card hover/focus states.
+- Added functional design tokens for raised surfaces, stronger borders, app accent background, and hover card shadows.
+- Reworked the Focus page layout so summary, forms, child Focuses, and Goals are easier to scan.
+- Kept product behavior unchanged.
+- Kept generated OpenAPI DTO usage isolated to the frontend API boundary.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"`.
+- `git diff --check`.
+
+Not done in this step:
+
+- no backend runtime verification;
 - no real backend integration.

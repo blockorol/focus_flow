@@ -9,7 +9,7 @@ type FlowCardProps = {
 
 export function FlowCard({ flow }: FlowCardProps) {
   return (
-    <Card className="grid gap-4">
+    <Card className="grid gap-4 hover:shadow-card-hover">
       <CardHeader className="mb-0">
         <div>
           <CardTitle>{flow.name}</CardTitle>
@@ -40,7 +40,7 @@ export function FlowCard({ flow }: FlowCardProps) {
           <p className="text-xs text-text-muted">Open the Focus aggregate.</p>
           <Link
             href={`/focuses/${flow.id}`}
-            className="inline-flex h-9 items-center justify-center rounded-control border border-border bg-surface px-3 text-sm font-medium text-text-primary shadow-sm transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
+            className="inline-flex h-9 items-center justify-center rounded-control border border-border bg-surface px-3 text-sm font-medium text-text-primary shadow-sm transition hover:border-border-strong hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
           >
             Open
           </Link>

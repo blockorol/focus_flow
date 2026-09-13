@@ -13,7 +13,7 @@ export function FocusSummary({ focus }: FocusSummaryProps) {
         <div>
           <CardTitle>{focus.name}</CardTitle>
           <CardDescription>
-            Created {formatFlowDate(focus.createdAt)} · Updated {formatFlowDate(focus.updatedAt)}
+            Created {formatFlowDate(focus.createdAt)} - Updated {formatFlowDate(focus.updatedAt)}
           </CardDescription>
         </div>
         <Badge tone={flowStatusTone(focus.status)}>{flowStatusLabel(focus.status)}</Badge>
@@ -77,4 +77,3 @@ function FocusColor({ color }: { color: string | null }) {
     </div>
   );
 }
-

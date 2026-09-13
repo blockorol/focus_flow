@@ -77,7 +77,7 @@ export function GoalCard({ goal, linkCandidates, onSave, onDelete, onLink, onUnl
   }
 
   return (
-    <Card>
+    <Card className="hover:shadow-card-hover">
       <CardHeader>
         <div>
           <CardTitle>{goal.description}</CardTitle>
@@ -157,4 +157,3 @@ export function GoalCard({ goal, linkCandidates, onSave, onDelete, onLink, onUnl
     </Card>
   );
 }
-

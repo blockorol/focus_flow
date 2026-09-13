@@ -1,6 +1,6 @@
 # Phase 2 - Frontend MVP, backend hardening, and integration
 
-Status: steps 1.1 through 1.8 complete and awaiting review on 2026-09-14.
+Status: frontend MVP with mocks is complete through step 1.9 and awaiting review on 2026-09-14.
 
 ## Goal
 
@@ -116,7 +116,7 @@ If backend hardening reveals a persistence model issue, stop before changing the
 
 #### 1.9 Frontend visual polish
 
-- [ ] **Goal:** improve the first UI pass without changing product behavior.
+- [x] **Goal:** improve the first UI pass without changing product behavior.
 - **Files/packages expected to change:** frontend styling/components only.
 - **Implementation notes:** improve spacing, cards, empty/loading/error states, focus/hover states, active sidebar states, and visual hierarchy; keep colors routed through tokens/functional classes.
 - **Commands/checks:** frontend lint; frontend typecheck; frontend tests; frontend production build; manual UI pass.
@@ -247,9 +247,9 @@ If backend hardening reveals a persistence model issue, stop before changing the
 
 ## Phase-level acceptance criteria
 
-- [ ] Mock-first frontend can be reviewed in the browser.
-- [ ] Frontend UI is built from shared components and functional colors/tokens.
-- [ ] Mock mode covers the successful happy path for auth, Flows, Focuses, and Goals.
+- [x] Mock-first frontend can be reviewed in the browser.
+- [x] Frontend UI is built from shared components and functional colors/tokens.
+- [x] Mock mode covers the successful happy path for auth, Flows, Focuses, and Goals.
 - [ ] Backend runtime has been verified through Docker Compose.
 - [ ] Backend migrations have been verified against local/disposable PostgreSQL.
 - [ ] Real HTTP backend auth and CRUD smoke checks pass.
@@ -447,3 +447,28 @@ Notes:
 
 - Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
 - The next frontend step is visual polish without product behavior changes.
+
+## Step 1.9 completion notes
+
+- Polished the frontend app background, shell surface, sidebar, session summary, page header, shared cards, and form controls using functional tokens.
+- Added raised surface and stronger border tokens plus hover card shadow tokens.
+- Improved sidebar active and hover states without changing navigation behavior.
+- Improved form field label weight and input hover/focus affordances.
+- Improved Flow, child Focus, and Goal card hover/focus affordances.
+- Reworked the Focus page layout so the Focus summary sits above the two-column work area, with forms separated from child Focuses and Goals.
+- Replaced a non-ASCII date separator in Focus summary copy with an ASCII separator to avoid repository text encoding surprises.
+- Kept product behavior unchanged and did not touch the OpenAPI contract, API clients, backend, or data models.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"` showed generated OpenAPI usage only in `frontend/src/api/mappers.ts` and `frontend/src/api/real.ts`.
+- `git diff --check`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+- The frontend dev server was not started because port `3000` was already in use by the user's local frontend session.

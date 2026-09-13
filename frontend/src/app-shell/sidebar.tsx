@@ -9,9 +9,10 @@ type SidebarProps = {
 
 export function Sidebar({ activePathname }: SidebarProps) {
   return (
-    <aside className="flex min-h-full flex-col rounded-card border border-border bg-surface p-5 shadow-card lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)]">
+    <aside className="flex min-h-full flex-col rounded-card border border-border bg-surface-raised p-5 shadow-card lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)]">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-widest text-action">FocusFlow</p>
+        <div className="inline-flex h-10 w-10 items-center justify-center rounded-control bg-action text-sm font-semibold text-action-foreground shadow-sm">FF</div>
+        <p className="mt-4 text-sm font-semibold uppercase tracking-widest text-action">FocusFlow</p>
         <p className="mt-3 text-sm leading-6 text-text-muted">A personal workspace for Focuses, Goals, and Specifications.</p>
       </div>
 
@@ -22,8 +23,8 @@ export function Sidebar({ activePathname }: SidebarProps) {
             <Link
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'rounded-control px-3 py-2 transition',
-                active ? 'bg-surface-muted font-medium text-text-primary' : 'text-text-muted hover:bg-surface-muted hover:text-text-primary',
+                'rounded-control border px-3 py-2 transition',
+                active ? 'border-action/20 bg-action/10 font-medium text-text-primary' : 'border-transparent text-text-muted hover:border-border hover:bg-surface-muted hover:text-text-primary',
                 item.disabled && 'pointer-events-none opacity-60',
               )}
               href={item.href}
@@ -39,7 +40,7 @@ export function Sidebar({ activePathname }: SidebarProps) {
         })}
       </nav>
 
-      <div className="mt-auto rounded-card bg-surface-muted p-4 text-xs leading-5 text-text-muted">
+      <div className="mt-auto rounded-card border border-border bg-surface-muted p-4 text-xs leading-5 text-text-muted">
         Mock mode is available for frontend review before real backend integration.
       </div>
     </aside>

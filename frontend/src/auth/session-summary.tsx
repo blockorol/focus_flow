@@ -14,10 +14,10 @@ export function SessionSummary() {
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 rounded-card border border-border bg-surface p-4 shadow-card">
-      <div>
+    <div className="flex items-center justify-between gap-4 rounded-card border border-border bg-surface-raised p-4 shadow-card">
+      <div className="min-w-0">
         <p className="text-sm font-medium text-text-primary">{session?.user.username ?? 'Not signed in'}</p>
-        <p className="text-xs text-text-muted">Mock session expires at {session?.expiresAt ?? 'unknown'}</p>
+        <p className="truncate text-xs text-text-muted">Mock session expires at {session?.expiresAt ?? 'unknown'}</p>
       </div>
       <Button variant="secondary" size="sm" onClick={signOut}>
         Log out
