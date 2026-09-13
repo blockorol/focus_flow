@@ -11,6 +11,8 @@ import (
 	"github.com/blockorol/focus_flow/backend/internal/api/generated"
 	apimodel "github.com/blockorol/focus_flow/backend/internal/api/model"
 	"github.com/blockorol/focus_flow/backend/internal/auth"
+	"github.com/blockorol/focus_flow/backend/internal/service"
+	"github.com/blockorol/focus_flow/backend/internal/storage"
 )
 
 const sessionCookieName = "focusflow_session"
@@ -25,7 +27,10 @@ type publicAPI struct {
 	cookies     CookieConfig
 }
 
-type userAPI struct{}
+type userAPI struct {
+	focuses service.FocusService
+	goals   service.GoalService
+}
 
 type CookieConfig struct {
 	Secure   bool
@@ -41,8 +46,8 @@ func CookieConfigForEnvironment(environment string) CookieConfig {
 
 var _ generated.StrictServerInterface = handler{}
 
-func NewHandler(origins []string, authService auth.Service, cookies CookieConfig) http.Handler {
-	apiHandler := handler{public: publicAPI{authService: authService, cookies: cookies}}
+func NewHandler(origins []string, authService auth.Service, focusService service.FocusService, goalService service.GoalService, cookies CookieConfig) http.Handler {
+	apiHandler := handler{public: publicAPI{authService: authService, cookies: cookies}, user: userAPI{focuses: focusService, goals: goalService}}
 	api := generated.Handler(generated.NewStrictHandler(apiHandler, []generated.StrictMiddlewareFunc{authMiddleware(authService)}))
 	allowed := make(map[string]bool, len(origins))
 	for _, origin := range origins {
@@ -207,6 +212,14 @@ func unauthorized() generated.UnauthorizedJSONResponse {
 	return generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: "Authentication is required."}
 }
 
+func notFound() generated.NotFoundJSONResponse {
+	return generated.NotFoundJSONResponse{Code: "not_found", Message: "The requested resource was not found."}
+}
+
 func isAuthFailure(err error) bool {
 	return errors.Is(err, auth.ErrInvalidCredentials) || errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken)
+}
+
+func isNotFound(err error) bool {
+	return errors.Is(err, storage.ErrNotFound)
 }

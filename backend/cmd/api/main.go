@@ -13,6 +13,8 @@ import (
 	"github.com/blockorol/focus_flow/backend/internal/auth"
 	"github.com/blockorol/focus_flow/backend/internal/config"
 	core "github.com/blockorol/focus_flow/backend/internal/model"
+	"github.com/blockorol/focus_flow/backend/internal/service"
+	"github.com/blockorol/focus_flow/backend/internal/storage/fake"
 	"github.com/blockorol/focus_flow/backend/internal/storage/postgres"
 )
 
@@ -38,8 +40,9 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("listen on configured port: %w", err)
 	}
+	store := fake.New()
 	log.Printf("API listening on port %d; database startup ping succeeded", c.Port)
-	return api.Serve(ctx, listener, api.NewHandler(c.AllowedOrigins, authService, api.CookieConfigForEnvironment(c.Environment)))
+	return api.Serve(ctx, listener, api.NewHandler(c.AllowedOrigins, authService, service.NewFocusService(store), service.NewGoalService(store), api.CookieConfigForEnvironment(c.Environment)))
 }
 
 func main() {

@@ -1,8 +1,12 @@
-// Package storage defines the boundaries implemented by database adapters.
-// Domain repositories will be introduced with their Phase 1 use cases.
+// Package storage defines backend storage boundaries.
 package storage
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+var ErrNotFound = errors.New("not found")
 
 type Connection interface {
 	Ping(context.Context) error

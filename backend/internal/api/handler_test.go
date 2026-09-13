@@ -16,6 +16,8 @@ import (
 	"github.com/blockorol/focus_flow/backend/internal/api/generated"
 	"github.com/blockorol/focus_flow/backend/internal/auth"
 	core "github.com/blockorol/focus_flow/backend/internal/model"
+	servicepkg "github.com/blockorol/focus_flow/backend/internal/service"
+	"github.com/blockorol/focus_flow/backend/internal/storage/fake"
 )
 
 func TestHealthMatchesContract(t *testing.T) {
@@ -143,7 +145,6 @@ func TestMockAPIEndpoints(t *testing.T) {
 		{"create focus", "POST", "/v1/focuses", `{"parentId":"` + focusID + `","name":"Child"}`, 201},
 		{"get focus", "GET", "/v1/focuses/" + focusID + "?include=goals,children&depth=1", ``, 200},
 		{"update focus", "PATCH", "/v1/focuses/" + focusID, `{"name":"Updated","clearFields":["description"]}`, 200},
-		{"delete focus", "DELETE", "/v1/focuses/" + focusID, ``, 204},
 		{"list children", "GET", "/v1/focuses/" + focusID + "/children?limit=10", ``, 200},
 		{"list goals", "GET", "/v1/focuses/" + focusID + "/goals", ``, 200},
 		{"create goal", "POST", "/v1/focuses/" + focusID + "/goals", `{"type":"primary","description":"Finish children"}`, 201},
@@ -152,6 +153,7 @@ func TestMockAPIEndpoints(t *testing.T) {
 		{"link goal", "POST", "/v1/goals/" + goalID + "/focuses", `{"focusId":"` + childID + `"}`, 200},
 		{"unlink goal", "DELETE", "/v1/goals/" + goalID + "/focuses/" + childID, ``, 200},
 		{"delete goal", "DELETE", "/v1/goals/" + goalID, ``, 204},
+		{"delete focus", "DELETE", "/v1/focuses/" + focusID, ``, 204},
 	}
 
 	for _, test := range tests {
@@ -240,7 +242,8 @@ func newTestHandler(t *testing.T) http.Handler {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return NewHandler([]string{"http://localhost:3000"}, service, CookieConfigForEnvironment("local"))
+	store := fake.New()
+	return NewHandler([]string{"http://localhost:3000"}, service, servicepkg.NewFocusService(store), servicepkg.NewGoalService(store), CookieConfigForEnvironment("local"))
 }
 
 func loginCookie(t *testing.T, handler http.Handler) *http.Cookie {
