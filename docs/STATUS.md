@@ -77,10 +77,11 @@ Blocked locally:
 - BE full MVP point 2 and point 3 API contract/stub work is complete in the working tree.
 - BE full MVP point 4 auth service and middleware work is complete in the working tree.
 - BE full MVP point 5 service layer without database persistence is complete in the working tree.
+- BE full MVP point 6 PostgreSQL storage implementation with goose migrations is complete in the working tree.
 
 ## Next action
 
-BE full MVP point 5 service layer without database persistence is complete and awaiting review/commit checkpoint. Do not start PostgreSQL storage implementation until the user approves continuing. Backend validation for this point used native Go commands directly, not npm wrappers.
+BE full MVP point 6 PostgreSQL storage implementation is complete and awaiting review/commit checkpoint. Do not start the next point or API contract refinement until the user approves continuing.
 
 ## BE full MVP point 1 result
 
@@ -205,3 +206,25 @@ Not done in this point:
 - no migrations;
 - no durable persistence;
 - no frontend UI/client work.
+
+## BE full MVP point 6 result
+
+Completed:
+
+- Added `backend/migrations/000001_initial_schema.sql` with goose Up and Down sections.
+- Added PostgreSQL tables for Focus, Goal, Goal links, generic Specification persistence infrastructure, and mutation Events.
+- Added pgx-based PostgreSQL storage behind the Focus and Goal storage interfaces.
+- Kept PostgreSQL row models and mappers local to the PostgreSQL implementation.
+- Wired the backend API service setup to the PostgreSQL store.
+- Updated disposable database test tooling to run application migrations and storage integration tests through Docker Compose.
+- Added integration coverage for CRUD persistence, hierarchy loading, cycle prevention, subtree deletion, Goal links/progress, cursor pagination, event writes, and migration rollback/reapply validation.
+
+Validation:
+
+- `go test ./...` from `backend/`.
+- `npm run check:migrations` from repository root.
+- `npm run test:database:local` from repository root with disposable Docker PostgreSQL.
+
+Known follow-up:
+
+- Refine the public API contract so `POST /v1/focuses` can return a clean not-found response when `parentId` does not exist.

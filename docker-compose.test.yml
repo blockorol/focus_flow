@@ -12,9 +12,7 @@ services:
       APP_USERNAME: local
       APP_PASSWORD: focusflow-test-password
       APP_TOKEN_SECRET: focusflow-test-token-secret-change-me
-      GOOSE_MIGRATION_DIR: /fixtures/migrations
-    volumes:
-      - ./backend/testdata:/fixtures:ro
+      GOOSE_MIGRATION_DIR: /app/migrations
     depends_on:
       postgres:
         condition: service_healthy

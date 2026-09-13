@@ -6,7 +6,10 @@ import (
 	"errors"
 )
 
-var ErrNotFound = errors.New("not found")
+var (
+	ErrNotFound         = errors.New("not found")
+	ErrInvalidHierarchy = errors.New("invalid hierarchy")
+)
 
 type Connection interface {
 	Ping(context.Context) error

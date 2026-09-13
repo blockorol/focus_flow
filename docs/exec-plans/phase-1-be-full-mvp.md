@@ -1,6 +1,6 @@
 # Phase 1 - BE full MVP
 
-Status: points 1 through 5 complete and awaiting review on 2026-09-13.
+Status: points 1 through 6 complete and awaiting review on 2026-09-13.
 
 ## Goal
 
@@ -41,7 +41,7 @@ The phase intentionally starts with backend-only work. It should produce a compl
 
 ## Open questions requiring user input
 
-No blocking questions for point 4. Token cookie name and production cookie policy are recorded in D-030.
+No blocking questions for point 6. One API contract gap is known: creating a child Focus with a missing parent should eventually expose a clean 404 response instead of relying on generic error mapping. This requires a public contract change and should be handled in the next API contract refinement checkpoint.
 
 ## API contract changes
 
@@ -158,7 +158,7 @@ Converter/builder style:
 
 ### 6. PostgreSQL storage implementation
 
-- [ ] **Goal:** implement real PostgreSQL persistence behind the service storage interfaces.
+- [x] **Goal:** implement real PostgreSQL persistence behind the service storage interfaces.
 - **Files/packages expected to change:** `backend/migrations/`; `backend/internal/storage/postgres/`; integration tests; Docker/Compose test scripts if needed; README/status updates.
 - **Commands/checks:** `npm run check:migrations`; `npm run check:backend`; `npm run test:database:local`; backend Docker build/check after local HTTPS trust is healthy; SQL integration tests for CRUD, hierarchy, cycle prevention, subtree deletion, Goal links, cursor pagination, and event writes where implemented.
 - **Acceptance criteria:** goose migrations create and roll back the schema; PostgreSQL implementation uses pgx; storage models stay local to PostgreSQL implementation; storage interfaces return internal models; service behavior works against disposable PostgreSQL; no production database is touched.
@@ -235,3 +235,24 @@ Converter/builder style:
 - Fake storage supports process-local create, read, update, delete, child listing, goal listing, goal links, computed goal progress, and cursor pagination.
 - No PostgreSQL repository, SQL query, migration, or durable persistence was added in this point.
 - Validation run: `gofmt -w internal/service internal/storage internal/api cmd/api`, `go test ./...`, `go vet ./...`, `go tool staticcheck ./...`, `go build -o .tmp/check-backend/api.exe ./cmd/api`, and `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`.
+
+## Point 6 completion notes
+
+- Added the first application goose migration in `backend/migrations/000001_initial_schema.sql` with both Up and Down sections.
+- Created the PostgreSQL 17 schema for `focus_object`, `focus_goal`, `focus_goal_link`, `focus_specification`, and `focus_event`.
+- Added pgx-based PostgreSQL storage behind the existing Focus and Goal storage interfaces.
+- Kept PostgreSQL row models and mapping helpers local to `backend/internal/storage/postgres/`; storage boundaries still return internal models only.
+- Wired the API service setup to the PostgreSQL store instead of the disposable fake store.
+- Updated disposable database test tooling so local integration tests run migrations with the application migration directory, then execute PostgreSQL storage integration tests.
+- Added integration coverage for Focus CRUD, hierarchy depth loading, cycle prevention, subtree deletion, Goal links/progress, cursor pagination, event writes, and goose Up/Down/Up validation.
+- Event writes are recorded for current Focus and Goal mutations where the CRUD behavior is implemented; activity read APIs remain outside this phase.
+
+Validation:
+
+- `go test ./...` from `backend/`.
+- `npm run check:migrations` from repository root.
+- `npm run test:database:local` from repository root with disposable Docker PostgreSQL.
+
+Known follow-up:
+
+- The current OpenAPI contract should be refined so `POST /v1/focuses` can return a clean not-found response when `parentId` does not exist. This is a public API contract change, so it is left for an explicit contract refinement checkpoint rather than being silently changed inside storage implementation.
