@@ -126,6 +126,50 @@ func TestProtectedEndpointsRequireSessionCookie(t *testing.T) {
 	}
 }
 
+func TestRequestParsingErrorsReturnJSONBadRequest(t *testing.T) {
+	handler := newTestHandler(t)
+	cookie := loginCookie(t, handler)
+	tests := []struct {
+		name   string
+		method string
+		path   string
+		body   string
+		cookie bool
+	}{
+		{"invalid json", "POST", "/v1/auth/login", `{`, false},
+		{"invalid uuid path", "GET", "/v1/focuses/not-a-uuid", ``, true},
+		{"invalid limit", "GET", "/v1/flows?limit=0", ``, true},
+		{"invalid depth", "GET", "/v1/flows?depth=6", ``, true},
+		{"empty cursor", "GET", "/v1/flows?cursor=", ``, true},
+		{"unsupported include", "GET", "/v1/flows?include=specifications", ``, true},
+		{"repeated scalar include", "GET", "/v1/flows?include=children&include=goals", ``, true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			r := jsonRequest(test.method, test.path, test.body)
+			if test.cookie {
+				r.AddCookie(cookie)
+			}
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, r)
+			if w.Code != http.StatusBadRequest {
+				t.Fatalf("status: %d body: %s", w.Code, w.Body.String())
+			}
+			if w.Header().Get("Content-Type") != "application/json" {
+				t.Fatalf("content type: %q", w.Header().Get("Content-Type"))
+			}
+			var body generated.ErrorResponse
+			if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+				t.Fatal(err)
+			}
+			if body.Code != "bad_request" || body.Message == "" {
+				t.Fatalf("unexpected error response: %#v", body)
+			}
+		})
+	}
+}
+
 func TestMockAPIEndpoints(t *testing.T) {
 	handler := newTestHandler(t)
 	cookie := loginCookie(t, handler)

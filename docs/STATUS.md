@@ -90,10 +90,15 @@ Blocked locally:
 - Phase 2 step 1.7 Focus edit UI is complete in the working tree.
 - Phase 2 step 1.8 Goals UI is complete in the working tree.
 - Phase 2 step 1.9 frontend visual polish is complete in the working tree.
+- Phase 2 step 2.1 Docker Compose runtime verification is complete.
+- Phase 2 step 2.2 local migrations verification is complete.
+- Phase 2 step 2.3 real HTTP auth verification is complete.
+- Phase 2 step 2.4 real HTTP CRUD verification is complete.
+- Phase 2 step 2.5 backend error behavior cleanup is complete.
 
 ## Next action
 
-Phase 2 frontend MVP with mocks is complete through step 1.9 and awaiting review/commit checkpoint. Next planned point is Phase 2 step 2.1: Docker Compose runtime verification. Do not start implementation until the user approves continuing.
+Phase 2 frontend MVP with mocks and backend hardening are complete through step 2.5 and awaiting review/commit checkpoint. Next planned point is Phase 2 step 2.6: Docker build verification. Do not start implementation until the user approves continuing.
 
 ## BE full MVP point 1 result
 
@@ -466,3 +471,120 @@ Not done in this step:
 
 - no backend runtime verification;
 - no real backend integration.
+
+## Phase 2 step 2.1 result
+
+Completed:
+
+- Verified `docker-compose.local.yml` is valid.
+- Built the backend image through Docker Compose without repository-level TLS or certificate workarounds.
+- Started local PostgreSQL 17 and backend through Docker Compose.
+- Verified PostgreSQL health and backend startup.
+- Verified backend startup logs include a successful database startup ping.
+- Verified `GET /v1/health` returns `{"status":"ok"}`.
+- Verified CORS preflight and normal health requests from `http://localhost:3000` return the expected local CORS headers.
+
+Validation:
+
+- `docker compose -f docker-compose.local.yml config --quiet`.
+- `docker compose -f docker-compose.local.yml up --build -d`.
+- `docker compose -f docker-compose.local.yml ps`.
+- `docker compose -f docker-compose.local.yml logs --tail 80 backend`.
+- `Invoke-RestMethod -Uri http://localhost:8080/v1/health -Method Get`.
+- `curl.exe -i -X OPTIONS http://localhost:8080/v1/health -H "Origin: http://localhost:3000" -H "Access-Control-Request-Method: GET"`.
+- `curl.exe -i http://localhost:8080/v1/health -H "Origin: http://localhost:3000"`.
+- `git diff --check`.
+
+Not done in this step:
+
+- no migration up/down verification;
+- no real HTTP auth smoke test;
+- no real HTTP CRUD smoke test;
+- no frontend/backend browser integration.
+
+## Phase 2 step 2.2 result
+
+Completed:
+
+- Verified local goose migration status against the PostgreSQL service from `docker-compose.local.yml`.
+- Applied local migrations through the backend image wrapper.
+- Verified local development database migration status after applying `000001_initial_schema.sql`; local schema is at version `1`.
+- Verified disposable migration validation through `docker-compose.test.yml`.
+- Verified disposable `up/down/up` behavior and PostgreSQL storage integration tests.
+- Confirmed the disposable test Compose project was removed after validation.
+
+Validation:
+
+- `docker compose -f docker-compose.local.yml run --rm --no-deps backend /app/bin/migrate status`.
+- `docker compose -f docker-compose.local.yml run --rm --no-deps backend /app/bin/migrate up`.
+- `docker compose -f docker-compose.local.yml run --rm --no-deps backend /app/bin/migrate status`.
+- `npm run test:database:local`.
+- `docker compose -f docker-compose.local.yml ps`.
+- `git diff --check`.
+
+Not done in this step:
+
+- no real HTTP auth smoke test;
+- no real HTTP CRUD smoke test;
+- no frontend/backend browser integration.
+
+## Phase 2 step 2.3 result
+
+Completed:
+
+- Verified real HTTP auth behavior against the backend running from `docker-compose.local.yml`.
+- Verified `GET /v1/auth/me` without a cookie returns `401`.
+- Verified invalid credentials on `POST /v1/auth/login` return `401`.
+- Verified valid login returns `200`, a session body, and a `focusflow_session` HttpOnly cookie.
+- Verified `GET /v1/auth/me` with the cookie returns `200` and the configured local user.
+- Verified `POST /v1/auth/refresh` with the cookie returns `200`, a refreshed session body, and a renewed session cookie.
+- Verified `POST /v1/auth/logout` returns `204` and expires the session cookie.
+- Verified `GET /v1/auth/me` after logout returns `401`.
+- Verified protected route `GET /v1/flows` returns `401` without a cookie and `200` with a valid cookie.
+
+Validation:
+
+- `curl.exe -sS -i http://localhost:8080/v1/auth/me -H "Origin: http://localhost:3000"`.
+- `curl.exe -sS -i -X POST http://localhost:8080/v1/auth/login -H "Origin: http://localhost:3000" -H "Content-Type: application/json" --data-binary "@<bad-login-json>"`.
+- `curl.exe -sS -i -c <cookie-jar> -X POST http://localhost:8080/v1/auth/login -H "Origin: http://localhost:3000" -H "Content-Type: application/json" --data-binary "@<good-login-json>"`.
+- `curl.exe -sS -i -b <cookie-jar> http://localhost:8080/v1/auth/me -H "Origin: http://localhost:3000"`.
+- `curl.exe -sS -i -b <cookie-jar> -c <cookie-jar> -X POST http://localhost:8080/v1/auth/refresh -H "Origin: http://localhost:3000"`.
+- `curl.exe -sS -i -b <cookie-jar> -c <cookie-jar> -X POST http://localhost:8080/v1/auth/logout -H "Origin: http://localhost:3000"`.
+- `curl.exe -sS -i http://localhost:8080/v1/flows -H "Origin: http://localhost:3000"`.
+- `curl.exe -sS -i -b <cookie-jar> "http://localhost:8080/v1/flows?limit=10" -H "Origin: http://localhost:3000"`.
+- `git diff --check`.
+
+Not done in this step:
+
+- no real HTTP CRUD smoke test;
+- no backend error behavior cleanup;
+- no frontend/backend browser integration.
+
+## Phase 2 step 2.4 result
+
+Completed:
+
+- Verified real backend CRUD behavior through HTTP against the backend running from `docker-compose.local.yml`.
+- Verified root Flow creation and listing.
+- Verified child Focus creation.
+- Verified missing parent `404`.
+- Verified Focus aggregate loading with child Focuses.
+- Verified Focus update, nullable field clearing, and terminal `finishedAt`.
+- Verified hierarchy conflict `409`.
+- Verified Goal creation with linked Focus progress.
+- Verified Goal listing, link, unlink, update, status override clearing, and delete.
+- Verified deleted Goal returns `404`.
+- Verified deleting a root Flow deletes its child Focus subtree.
+- Verified backend and PostgreSQL containers remained healthy after the smoke run.
+
+Validation:
+
+- Temporary Node HTTP smoke script using `fetch`, an in-memory cookie, and local Compose credentials.
+- `docker compose -f docker-compose.local.yml ps`.
+- `docker compose -f docker-compose.local.yml logs --tail 120 backend`.
+- `git diff --check`.
+
+Not done in this step:
+
+- no backend error behavior cleanup;
+- no frontend/backend browser integration.

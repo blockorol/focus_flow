@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/blockorol/focus_flow/backend/internal/api/generated"
@@ -48,7 +49,15 @@ var _ generated.StrictServerInterface = handler{}
 
 func NewHandler(origins []string, authService auth.Service, focusService service.FocusService, goalService service.GoalService, cookies CookieConfig) http.Handler {
 	apiHandler := handler{public: publicAPI{authService: authService, cookies: cookies}, user: userAPI{focuses: focusService, goals: goalService}}
-	api := generated.Handler(generated.NewStrictHandler(apiHandler, []generated.StrictMiddlewareFunc{authMiddleware(authService)}))
+	strictHandler := generated.NewStrictHandlerWithOptions(
+		apiHandler,
+		[]generated.StrictMiddlewareFunc{authMiddleware(authService)},
+		generated.StrictHTTPServerOptions{
+			RequestErrorHandlerFunc:  writeBadRequest,
+			ResponseErrorHandlerFunc: writeInternalServerError,
+		},
+	)
+	api := generated.HandlerWithOptions(strictHandler, generated.StdHTTPServerOptions{ErrorHandlerFunc: writeBadRequest})
 	allowed := make(map[string]bool, len(origins))
 	for _, origin := range origins {
 		allowed[origin] = true
@@ -81,6 +90,10 @@ func NewHandler(origins []string, authService auth.Service, focusService service
 			w.Header().Set("Access-Control-Allow-Methods", "DELETE, GET, PATCH, POST")
 			w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type")
 			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		if !validQueryParameters(r) {
+			writeBadRequest(w, r, nil)
 			return
 		}
 		api.ServeHTTP(w, r)
@@ -172,6 +185,49 @@ func allowedMethod(method string) bool {
 	}
 }
 
+func validQueryParameters(r *http.Request) bool {
+	query := r.URL.Query()
+	if values, ok := query["limit"]; ok && !validBoundedInteger(values, 1, 100) {
+		return false
+	}
+	if values, ok := query["depth"]; ok && !validBoundedInteger(values, 0, 5) {
+		return false
+	}
+	if values, ok := query["cursor"]; ok && !validSingleNonEmpty(values) {
+		return false
+	}
+	if values, ok := query["include"]; ok && !validInclude(values) {
+		return false
+	}
+	return true
+}
+
+func validBoundedInteger(values []string, minimum, maximum int) bool {
+	if len(values) != 1 {
+		return false
+	}
+	value, err := strconv.Atoi(values[0])
+	return err == nil && value >= minimum && value <= maximum
+}
+
+func validSingleNonEmpty(values []string) bool {
+	return len(values) == 1 && values[0] != ""
+}
+
+func validInclude(values []string) bool {
+	if len(values) != 1 {
+		return false
+	}
+	for _, token := range strings.Split(values[0], ",") {
+		switch strings.TrimSpace(token) {
+		case "children", "goals":
+		default:
+			return false
+		}
+	}
+	return true
+}
+
 func authMiddleware(authService auth.Service) generated.StrictMiddlewareFunc {
 	return func(next generated.StrictHandlerFunc, operationID string) generated.StrictHandlerFunc {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
@@ -203,9 +259,21 @@ func protectedOperation(operationID string) bool {
 }
 
 func writeUnauthorized(w http.ResponseWriter) {
+	writeJSONError(w, http.StatusUnauthorized, unauthorized())
+}
+
+func writeBadRequest(w http.ResponseWriter, _ *http.Request, _ error) {
+	writeJSONError(w, http.StatusBadRequest, generated.ErrorResponse{Code: "bad_request", Message: "Invalid request."})
+}
+
+func writeInternalServerError(w http.ResponseWriter, _ *http.Request, _ error) {
+	writeJSONError(w, http.StatusInternalServerError, generated.ErrorResponse{Code: "internal_error", Message: "Unexpected server error."})
+}
+
+func writeJSONError(w http.ResponseWriter, status int, response any) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusUnauthorized)
-	_ = json.NewEncoder(w).Encode(unauthorized())
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func unauthorized() generated.UnauthorizedJSONResponse {
