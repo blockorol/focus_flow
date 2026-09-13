@@ -49,6 +49,11 @@ func (store *Store) CreateFlow(ctx context.Context, userID core.UserID, input co
 func (store *Store) CreateFocus(_ context.Context, _ core.UserID, input core.CreateFocus) (core.Focus, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
+	if input.ParentID != nil {
+		if _, ok := store.focuses[*input.ParentID]; !ok {
+			return core.Focus{}, storage.ErrNotFound
+		}
+	}
 	id := newID()
 	now := store.now().UTC()
 	status := core.FocusStatusPlanned
@@ -78,6 +83,11 @@ func (store *Store) UpdateFocus(_ context.Context, _ core.UserID, input core.Upd
 		return core.Focus{}, storage.ErrNotFound
 	}
 	if input.ParentID.Set {
+		if input.ParentID.Value != nil {
+			if err := store.ensureCanMoveFocusLocked(input.ID, *input.ParentID.Value); err != nil {
+				return core.Focus{}, err
+			}
+		}
 		focus.ParentID = input.ParentID.Value
 	}
 	if input.Name != nil {
@@ -279,6 +289,30 @@ func (store *Store) goalAggregateLocked(id core.GoalID) core.Goal {
 		}
 	}
 	return goal
+}
+
+func (store *Store) ensureCanMoveFocusLocked(id core.FocusID, parentID core.FocusID) error {
+	if id == parentID {
+		return storage.ErrInvalidHierarchy
+	}
+	if _, ok := store.focuses[parentID]; !ok {
+		return storage.ErrNotFound
+	}
+	if store.isDescendantLocked(parentID, id) {
+		return storage.ErrInvalidHierarchy
+	}
+	return nil
+}
+
+func (store *Store) isDescendantLocked(candidateID core.FocusID, ancestorID core.FocusID) bool {
+	candidate, ok := store.focuses[candidateID]
+	if !ok || candidate.ParentID == nil {
+		return false
+	}
+	if *candidate.ParentID == ancestorID {
+		return true
+	}
+	return store.isDescendantLocked(*candidate.ParentID, ancestorID)
 }
 
 func (store *Store) deleteFocusLocked(id core.FocusID) {

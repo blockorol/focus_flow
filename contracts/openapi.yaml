@@ -186,6 +186,8 @@ paths:
                 $ref: '#/components/schemas/FocusResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /v1/focuses/{id}:
     get:
@@ -234,6 +236,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
     delete:
       operationId: deleteFocus
       tags: [Focuses]
@@ -499,6 +503,12 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
     NotFound:
       description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: The requested change conflicts with the current resource state.
       content:
         application/json:
           schema:

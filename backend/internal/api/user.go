@@ -52,7 +52,7 @@ func (api userAPI) CreateFocus(ctx context.Context, request generated.CreateFocu
 	focus, err := api.focuses.CreateFocus(ctx, userID, apimodel.CreateFocusToInternal(*request.Body))
 	if err != nil {
 		if isNotFound(err) {
-			return generated.CreateFocus401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+			return generated.CreateFocus404JSONResponse{NotFoundJSONResponse: notFound()}, nil
 		}
 		return nil, err
 	}
@@ -101,6 +101,9 @@ func (api userAPI) UpdateFocus(ctx context.Context, request generated.UpdateFocu
 	if err != nil {
 		if isNotFound(err) {
 			return generated.UpdateFocus404JSONResponse{NotFoundJSONResponse: notFound()}, nil
+		}
+		if isInvalidHierarchy(err) {
+			return generated.UpdateFocus409JSONResponse{ConflictJSONResponse: conflict()}, nil
 		}
 		return nil, err
 	}

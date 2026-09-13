@@ -216,10 +216,18 @@ func notFound() generated.NotFoundJSONResponse {
 	return generated.NotFoundJSONResponse{Code: "not_found", Message: "The requested resource was not found."}
 }
 
+func conflict() generated.ConflictJSONResponse {
+	return generated.ConflictJSONResponse{Code: "conflict", Message: "The requested change conflicts with the current resource state."}
+}
+
 func isAuthFailure(err error) bool {
 	return errors.Is(err, auth.ErrInvalidCredentials) || errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken)
 }
 
 func isNotFound(err error) bool {
 	return errors.Is(err, storage.ErrNotFound)
+}
+
+func isInvalidHierarchy(err error) bool {
+	return errors.Is(err, storage.ErrInvalidHierarchy)
 }

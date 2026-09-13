@@ -169,6 +169,36 @@ func TestMockAPIEndpoints(t *testing.T) {
 	}
 }
 
+func TestCreateFocusWithMissingParentReturnsNotFound(t *testing.T) {
+	handler := newTestHandler(t)
+	cookie := loginCookie(t, handler)
+	request := jsonRequest("POST", "/v1/focuses", `{"parentId":"018f6f1f-9a7b-7000-8000-999999999999","name":"Child"}`)
+	request.AddCookie(cookie)
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusNotFound {
+		t.Fatalf("status: %d body: %s", response.Code, response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), "not_found") {
+		t.Fatalf("unexpected body: %s", response.Body.String())
+	}
+}
+
+func TestUpdateFocusCycleReturnsConflict(t *testing.T) {
+	handler := newTestHandler(t)
+	cookie := loginCookie(t, handler)
+	request := jsonRequest("PATCH", "/v1/focuses/018f6f1f-9a7b-7000-8000-000000000100", `{"parentId":"018f6f1f-9a7b-7000-8000-000000000101"}`)
+	request.AddCookie(cookie)
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusConflict {
+		t.Fatalf("status: %d body: %s", response.Code, response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), "conflict") {
+		t.Fatalf("unexpected body: %s", response.Body.String())
+	}
+}
+
 func TestFocusAPIResponseDoesNotExposeSpecificationsBeforeContractExists(t *testing.T) {
 	handler := newTestHandler(t)
 	cookie := loginCookie(t, handler)

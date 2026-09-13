@@ -33,6 +33,7 @@ Planning reset in progress. Phase 0 foundation work remains in the working tree,
 - D-027: old phase roadmap superseded; new active phase is BE full MVP.
 - D-028: configured-user password is read from `APP_PASSWORD` and converted to an in-memory credential/hash representation by backend auth setup.
 - D-030: auth configuration uses `APP_USER_ID`; the API session cookie is `focusflow_session`; cookie security is derived from `APP_ENV`.
+- D-031: API missing-resource and hierarchy-conflict responses.
 
 ## Validation run locally
 
@@ -81,7 +82,7 @@ Blocked locally:
 
 ## Next action
 
-BE full MVP point 6 PostgreSQL storage implementation is complete and awaiting review/commit checkpoint. Do not start the next point or API contract refinement until the user approves continuing.
+BE full MVP point 6 PostgreSQL storage implementation and its follow-up API contract refinement are complete and awaiting review/commit checkpoint. Do not start the next implementation point until the user approves continuing.
 
 ## BE full MVP point 1 result
 

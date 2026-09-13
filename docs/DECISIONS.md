@@ -305,3 +305,10 @@ The API session cookie name is `focusflow_session`, matching the OpenAPI `cookie
 Logout clears the browser cookie. The BE full MVP does not add server-side token revocation storage before the persistence layer exists. Refresh only renews a currently valid token/session.
 
 ---
+## D-031 - API missing-resource and hierarchy-conflict responses
+
+**Decision:** `POST /v1/focuses` returns `404 Not Found` when the requested `parentId` does not exist.
+
+`PATCH /v1/focuses/{id}` returns `409 Conflict` when the requested parent change would violate hierarchy rules, including creating a cycle.
+
+Both responses use the shared `ErrorResponse` shape.

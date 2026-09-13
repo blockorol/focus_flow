@@ -41,7 +41,7 @@ The phase intentionally starts with backend-only work. It should produce a compl
 
 ## Open questions requiring user input
 
-No blocking questions for point 6. One API contract gap is known: creating a child Focus with a missing parent should eventually expose a clean 404 response instead of relying on generic error mapping. This requires a public contract change and should be handled in the next API contract refinement checkpoint.
+No blocking questions for point 6. The known `POST /v1/focuses` missing-parent contract gap was resolved in the post-point contract refinement.
 
 ## API contract changes
 
