@@ -7,15 +7,20 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/blockorol/focus_flow/backend/internal/api/generated"
+	"github.com/blockorol/focus_flow/backend/internal/auth"
+	core "github.com/blockorol/focus_flow/backend/internal/model"
 )
 
 func TestHealthMatchesContract(t *testing.T) {
 	w := httptest.NewRecorder()
-	NewHandler([]string{"http://localhost:3000"}).ServeHTTP(w, httptest.NewRequest("GET", "/v1/health", nil))
+	newTestHandler(t).ServeHTTP(w, httptest.NewRequest("GET", "/v1/health", nil))
 	if w.Code != 200 || w.Header().Get("Content-Type") != "application/json" {
 		t.Fatalf("unexpected response: %d %v", w.Code, w.Header())
 	}
@@ -54,7 +59,7 @@ func TestCORS(t *testing.T) {
 			r.Header.Set("Access-Control-Request-Method", test.requestedMethod)
 			r.Header.Set("Access-Control-Request-Headers", test.headers)
 			w := httptest.NewRecorder()
-			NewHandler([]string{"http://localhost:3000"}).ServeHTTP(w, r)
+			newTestHandler(t).ServeHTTP(w, r)
 			if w.Code != test.status {
 				t.Fatalf("status: %d", w.Code)
 			}
@@ -69,8 +74,59 @@ func TestCORS(t *testing.T) {
 	}
 }
 
+func TestAuthEndpoints(t *testing.T) {
+	handler := newTestHandler(t)
+
+	badLogin := httptest.NewRecorder()
+	handler.ServeHTTP(badLogin, jsonRequest("POST", "/v1/auth/login", `{"username":"local","password":"wrong"}`))
+	if badLogin.Code != http.StatusUnauthorized {
+		t.Fatalf("bad login status: %d", badLogin.Code)
+	}
+
+	login := httptest.NewRecorder()
+	handler.ServeHTTP(login, jsonRequest("POST", "/v1/auth/login", `{"username":"local","password":"secret"}`))
+	if login.Code != http.StatusOK {
+		t.Fatalf("login status: %d body: %s", login.Code, login.Body.String())
+	}
+	cookie := login.Result().Cookies()[0]
+	if cookie.Name != sessionCookieName || !cookie.HttpOnly || cookie.Value == "" {
+		t.Fatalf("session cookie was not issued: %#v", cookie)
+	}
+
+	me := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/v1/auth/me", nil)
+	req.AddCookie(cookie)
+	handler.ServeHTTP(me, req)
+	if me.Code != http.StatusOK || !strings.Contains(me.Body.String(), "local") {
+		t.Fatalf("me status: %d body: %s", me.Code, me.Body.String())
+	}
+
+	refresh := httptest.NewRecorder()
+	req = httptest.NewRequest("POST", "/v1/auth/refresh", nil)
+	req.AddCookie(cookie)
+	handler.ServeHTTP(refresh, req)
+	if refresh.Code != http.StatusOK || len(refresh.Result().Cookies()) == 0 {
+		t.Fatalf("refresh status: %d cookies=%#v body: %s", refresh.Code, refresh.Result().Cookies(), refresh.Body.String())
+	}
+
+	logout := httptest.NewRecorder()
+	handler.ServeHTTP(logout, httptest.NewRequest("POST", "/v1/auth/logout", nil))
+	if logout.Code != http.StatusNoContent || len(logout.Result().Cookies()) == 0 || logout.Result().Cookies()[0].MaxAge >= 0 {
+		t.Fatalf("logout did not expire the cookie: status=%d cookies=%#v", logout.Code, logout.Result().Cookies())
+	}
+}
+
+func TestProtectedEndpointsRequireSessionCookie(t *testing.T) {
+	w := httptest.NewRecorder()
+	newTestHandler(t).ServeHTTP(w, httptest.NewRequest("GET", "/v1/flows", nil))
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("status: %d body: %s", w.Code, w.Body.String())
+	}
+}
+
 func TestMockAPIEndpoints(t *testing.T) {
-	handler := NewHandler([]string{"http://localhost:3000"})
+	handler := newTestHandler(t)
+	cookie := loginCookie(t, handler)
 	focusID := "018f6f1f-9a7b-7000-8000-000000000100"
 	goalID := "018f6f1f-9a7b-7000-8000-000000000200"
 	childID := "018f6f1f-9a7b-7000-8000-000000000101"
@@ -82,9 +138,6 @@ func TestMockAPIEndpoints(t *testing.T) {
 		body   string
 		status int
 	}{
-		{"login", "POST", "/v1/auth/login", `{"username":"demo","password":"demo"}`, 200},
-		{"refresh", "POST", "/v1/auth/refresh", ``, 200},
-		{"me", "GET", "/v1/auth/me", ``, 200},
 		{"list flows", "GET", "/v1/flows?include=goals,children&depth=1", ``, 200},
 		{"create flow", "POST", "/v1/flows", `{"name":"Root"}`, 201},
 		{"create focus", "POST", "/v1/focuses", `{"parentId":"` + focusID + `","name":"Child"}`, 201},
@@ -103,10 +156,8 @@ func TestMockAPIEndpoints(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r := httptest.NewRequest(test.method, test.path, bytes.NewBufferString(test.body))
-			if test.body != "" {
-				r.Header.Set("Content-Type", "application/json")
-			}
+			r := jsonRequest(test.method, test.path, test.body)
+			r.AddCookie(cookie)
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, r)
 			if w.Code != test.status {
@@ -117,8 +168,12 @@ func TestMockAPIEndpoints(t *testing.T) {
 }
 
 func TestFocusAPIResponseDoesNotExposeSpecificationsBeforeContractExists(t *testing.T) {
+	handler := newTestHandler(t)
+	cookie := loginCookie(t, handler)
 	w := httptest.NewRecorder()
-	NewHandler(nil).ServeHTTP(w, httptest.NewRequest("GET", "/v1/focuses/018f6f1f-9a7b-7000-8000-000000000100", nil))
+	req := httptest.NewRequest("GET", "/v1/focuses/018f6f1f-9a7b-7000-8000-000000000100", nil)
+	req.AddCookie(cookie)
+	handler.ServeHTTP(w, req)
 	if w.Code != 200 {
 		t.Fatalf("status: %d", w.Code)
 	}
@@ -153,7 +208,7 @@ func TestServerShutdown(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	done := make(chan error, 1)
-	go func() { done <- Serve(ctx, listener, NewHandler(nil)) }()
+	go func() { done <- Serve(ctx, listener, newTestHandler(t)) }()
 	client := &http.Client{Timeout: 3 * time.Second}
 	response, err := client.Get("http://" + listener.Addr().String() + "/v1/health")
 	if err != nil {
@@ -169,4 +224,43 @@ func TestServerShutdown(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("shutdown timed out")
 	}
+}
+
+func newTestHandler(t *testing.T) http.Handler {
+	t.Helper()
+	credential, err := auth.NewPasswordCredential("secret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	service, err := auth.NewService(
+		auth.NewConfiguredUserVerifier(core.User{ID: uuid.MustParse("018f6f1f-9a7b-7000-8000-000000000001"), Username: "local"}, credential),
+		[]byte(strings.Repeat("s", 32)),
+		2*time.Hour,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return NewHandler([]string{"http://localhost:3000"}, service, CookieConfigForEnvironment("local"))
+}
+
+func loginCookie(t *testing.T, handler http.Handler) *http.Cookie {
+	t.Helper()
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, jsonRequest("POST", "/v1/auth/login", `{"username":"local","password":"secret"}`))
+	if w.Code != http.StatusOK {
+		t.Fatalf("login failed: %d %s", w.Code, w.Body.String())
+	}
+	cookies := w.Result().Cookies()
+	if len(cookies) != 1 {
+		t.Fatalf("expected one auth cookie, got %#v", cookies)
+	}
+	return cookies[0]
+}
+
+func jsonRequest(method, path, body string) *http.Request {
+	r := httptest.NewRequest(method, path, bytes.NewBufferString(body))
+	if body != "" {
+		r.Header.Set("Content-Type", "application/json")
+	}
+	return r
 }

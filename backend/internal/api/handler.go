@@ -3,22 +3,84 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/blockorol/focus_flow/backend/internal/api/generated"
 	apimodel "github.com/blockorol/focus_flow/backend/internal/api/model"
+	"github.com/blockorol/focus_flow/backend/internal/auth"
 )
+
+const sessionCookieName = "focusflow_session"
 
 type handler struct {
 	public publicAPI
 	user   userAPI
 }
 
-type publicAPI struct{}
+type publicAPI struct {
+	authService auth.Service
+	cookies     CookieConfig
+}
+
 type userAPI struct{}
 
+type CookieConfig struct {
+	Secure   bool
+	SameSite http.SameSite
+}
+
+func CookieConfigForEnvironment(environment string) CookieConfig {
+	if environment == "production" {
+		return CookieConfig{Secure: true, SameSite: http.SameSiteNoneMode}
+	}
+	return CookieConfig{Secure: false, SameSite: http.SameSiteLaxMode}
+}
+
 var _ generated.StrictServerInterface = handler{}
+
+func NewHandler(origins []string, authService auth.Service, cookies CookieConfig) http.Handler {
+	apiHandler := handler{public: publicAPI{authService: authService, cookies: cookies}}
+	api := generated.Handler(generated.NewStrictHandler(apiHandler, []generated.StrictMiddlewareFunc{authMiddleware(authService)}))
+	allowed := make(map[string]bool, len(origins))
+	for _, origin := range origins {
+		allowed[origin] = true
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Vary", "Origin")
+		origin := r.Header.Get("Origin")
+		preflight := r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != ""
+		if preflight {
+			w.Header().Add("Vary", "Access-Control-Request-Method")
+			w.Header().Add("Vary", "Access-Control-Request-Headers")
+		}
+		if allowed[origin] {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
+		if preflight {
+			if !allowed[origin] || !allowedMethod(r.Header.Get("Access-Control-Request-Method")) {
+				http.Error(w, "CORS preflight is not allowed", http.StatusForbidden)
+				return
+			}
+			for _, header := range strings.Split(r.Header.Get("Access-Control-Request-Headers"), ",") {
+				switch strings.ToLower(strings.TrimSpace(header)) {
+				case "", "accept", "authorization", "content-type":
+				default:
+					http.Error(w, "CORS request header is not allowed", http.StatusForbidden)
+					return
+				}
+			}
+			w.Header().Set("Access-Control-Allow-Methods", "DELETE, GET, PATCH, POST")
+			w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type")
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		api.ServeHTTP(w, r)
+	})
+}
 
 func (h handler) Login(ctx context.Context, request generated.LoginRequestObject) (generated.LoginResponseObject, error) {
 	return h.public.Login(ctx, request)
@@ -96,46 +158,6 @@ func (handler) GetHealth(context.Context, generated.GetHealthRequestObject) (gen
 	return generated.GetHealth200JSONResponse{Status: generated.Ok}, nil
 }
 
-func NewHandler(origins []string) http.Handler {
-	api := generated.Handler(generated.NewStrictHandler(handler{}, []generated.StrictMiddlewareFunc{mockUserContextMiddleware}))
-	allowed := make(map[string]bool, len(origins))
-	for _, origin := range origins {
-		allowed[origin] = true
-	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Vary", "Origin")
-		origin := r.Header.Get("Origin")
-		preflight := r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != ""
-		if preflight {
-			w.Header().Add("Vary", "Access-Control-Request-Method")
-			w.Header().Add("Vary", "Access-Control-Request-Headers")
-		}
-		if allowed[origin] {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
-		}
-		if preflight {
-			if !allowed[origin] || !allowedMethod(r.Header.Get("Access-Control-Request-Method")) {
-				http.Error(w, "CORS preflight is not allowed", http.StatusForbidden)
-				return
-			}
-			for _, header := range strings.Split(r.Header.Get("Access-Control-Request-Headers"), ",") {
-				switch strings.ToLower(strings.TrimSpace(header)) {
-				case "", "accept", "authorization", "content-type":
-				default:
-					http.Error(w, "CORS request header is not allowed", http.StatusForbidden)
-					return
-				}
-			}
-			w.Header().Set("Access-Control-Allow-Methods", "DELETE, GET, PATCH, POST")
-			w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type")
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		api.ServeHTTP(w, r)
-	})
-}
-
 func allowedMethod(method string) bool {
 	switch method {
 	case http.MethodDelete, http.MethodGet, http.MethodPatch, http.MethodPost:
@@ -145,12 +167,24 @@ func allowedMethod(method string) bool {
 	}
 }
 
-func mockUserContextMiddleware(next generated.StrictHandlerFunc, operationID string) generated.StrictHandlerFunc {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
-		if protectedOperation(operationID) {
-			ctx = apimodel.ContextWithUserID(ctx, mockUserID)
+func authMiddleware(authService auth.Service) generated.StrictMiddlewareFunc {
+	return func(next generated.StrictHandlerFunc, operationID string) generated.StrictHandlerFunc {
+		return func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+			if !protectedOperation(operationID) {
+				return next(ctx, w, r, request)
+			}
+			cookie, err := r.Cookie(sessionCookieName)
+			if err != nil || cookie.Value == "" {
+				writeUnauthorized(w)
+				return nil, nil
+			}
+			session, err := authService.VerifyToken(cookie.Value)
+			if err != nil {
+				writeUnauthorized(w)
+				return nil, nil
+			}
+			return next(apimodel.ContextWithSession(ctx, session), w, r, request)
 		}
-		return next(ctx, w, r, request)
 	}
 }
 
@@ -161,4 +195,18 @@ func protectedOperation(operationID string) bool {
 	default:
 		return true
 	}
+}
+
+func writeUnauthorized(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	_ = json.NewEncoder(w).Encode(unauthorized())
+}
+
+func unauthorized() generated.UnauthorizedJSONResponse {
+	return generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: "Authentication is required."}
+}
+
+func isAuthFailure(err error) bool {
+	return errors.Is(err, auth.ErrInvalidCredentials) || errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken)
 }

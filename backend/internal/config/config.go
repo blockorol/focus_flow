@@ -1,4 +1,4 @@
-// Package config loads the environment required by the foundation server.
+// Package config loads runtime configuration required by the backend server.
 package config
 
 import (
@@ -6,13 +6,30 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
+
+	"github.com/blockorol/focus_flow/backend/internal/auth"
+	core "github.com/blockorol/focus_flow/backend/internal/model"
 )
+
+const defaultSessionTTL = 2 * time.Hour
 
 type Config struct {
 	Environment    string
 	Port           int
 	DatabaseURL    string
 	AllowedOrigins []string
+	Auth           AuthConfig
+}
+
+type AuthConfig struct {
+	UserID      core.UserID
+	Username    string
+	Credential  auth.PasswordCredential
+	TokenSecret []byte
+	SessionTTL  time.Duration
 }
 
 func Load(getenv func(string) string) (Config, error) {
@@ -46,5 +63,31 @@ func Load(getenv func(string) string) (Config, error) {
 		}
 		c.AllowedOrigins = append(c.AllowedOrigins, origin)
 	}
+	authConfig, err := loadAuth(getenv)
+	if err != nil {
+		return Config{}, err
+	}
+	c.Auth = authConfig
 	return c, nil
+}
+
+func loadAuth(getenv func(string) string) (AuthConfig, error) {
+	userIDValue := strings.TrimSpace(getenv("APP_USER_ID"))
+	userID, err := uuid.Parse(userIDValue)
+	if err != nil || userID == uuid.Nil {
+		return AuthConfig{}, errors.New("APP_USER_ID must be a non-empty UUID")
+	}
+	username := strings.TrimSpace(getenv("APP_USERNAME"))
+	if username == "" {
+		return AuthConfig{}, errors.New("APP_USERNAME must not be empty")
+	}
+	credential, err := auth.NewPasswordCredential(getenv("APP_PASSWORD"))
+	if err != nil {
+		return AuthConfig{}, errors.New("APP_PASSWORD must not be empty")
+	}
+	secret := []byte(getenv("APP_TOKEN_SECRET"))
+	if len(secret) < 32 {
+		return AuthConfig{}, errors.New("APP_TOKEN_SECRET must be at least 32 bytes")
+	}
+	return AuthConfig{UserID: userID, Username: username, Credential: credential, TokenSecret: append([]byte(nil), secret...), SessionTTL: defaultSessionTTL}, nil
 }

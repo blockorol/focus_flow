@@ -11,7 +11,10 @@ services:
       PORT: "8080"
       DATABASE_URL: ${DATABASE_URL:-postgres://focusflow:focusflow-local@postgres:5432/focusflow?sslmode=disable}
       CORS_ALLOWED_ORIGINS: http://localhost:3000
-      COOKIE_SECURE: "false"
+      APP_USER_ID: ${APP_USER_ID:-018f6f1f-9a7b-7000-8000-000000000001}
+      APP_USERNAME: ${APP_USERNAME:-local}
+      APP_PASSWORD: ${APP_PASSWORD:-focusflow-local-password}
+      APP_TOKEN_SECRET: ${APP_TOKEN_SECRET:-focusflow-local-token-secret-change-me}
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:

@@ -32,6 +32,7 @@ Planning reset in progress. Phase 0 foundation work remains in the working tree,
 - D-026: host Go for Go tooling; Docker Compose for backend/PostgreSQL runtime; Docker image version tags without digest pins.
 - D-027: old phase roadmap superseded; new active phase is BE full MVP.
 - D-028: configured-user password is read from `APP_PASSWORD` and converted to an in-memory credential/hash representation by backend auth setup.
+- D-030: auth configuration uses `APP_USER_ID`; the API session cookie is `focusflow_session`; cookie security is derived from `APP_ENV`.
 
 ## Validation run locally
 
@@ -77,7 +78,7 @@ Blocked locally:
 
 ## Next action
 
-BE full MVP point 2 and point 3 API contract/stub work is complete and awaiting review/commit checkpoint. Do not start auth service implementation until the user approves continuing. Backend validation for this point used native Go commands directly, not npm wrappers.
+BE full MVP point 4 auth service and middleware work is complete and awaiting review/commit checkpoint. Do not start service layer implementation until the user approves continuing. Backend validation for this point used native Go commands directly, not npm wrappers.
 
 ## BE full MVP point 1 result
 
@@ -135,6 +136,41 @@ Validation:
 Not done in this point:
 
 - no real auth verification;
+- no service layer;
+- no storage interfaces or PostgreSQL implementation;
+- no migrations;
+- no frontend UI/client work.
+
+## BE full MVP point 4 result
+
+Completed:
+
+- Added configured single-user authentication behind a verifier abstraction.
+- Added in-memory password credential conversion from `APP_PASSWORD`.
+- Added HMAC-signed session tokens with 2-hour expiration.
+- Added real cookie middleware for protected API routes.
+- Added login, logout, refresh, and me behavior over the `focusflow_session` HttpOnly cookie.
+- Added `APP_USER_ID` local/test/prod documentation.
+
+
+Validation:
+
+- `go test ./...`.
+- `go vet ./...`.
+- `go tool staticcheck ./...`.
+- `go build -o .tmp/check-backend/api.exe ./cmd/api`.
+- `go build -o .tmp/check-backend/hash-password.exe ./cmd/hash-password`.
+- `npm run contract:lint`.
+- Generated drift check by regenerating and comparing `backend/internal/api/generated/openapi.gen.go` and `frontend/src/api/generated/schema.d.ts`.
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend test -- --run`.
+- `docker compose -f docker-compose.local.yml config --quiet`.
+- `docker compose -f docker-compose.test.yml config --quiet`.
+- `git diff --check`.
+
+Not done in this point:
+
+- no server-side token revocation persistence;
 - no service layer;
 - no storage interfaces or PostgreSQL implementation;
 - no migrations;

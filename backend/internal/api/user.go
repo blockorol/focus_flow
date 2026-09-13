@@ -8,10 +8,11 @@ import (
 )
 
 func (userAPI) GetCurrentSession(ctx context.Context, _ generated.GetCurrentSessionRequestObject) (generated.GetCurrentSessionResponseObject, error) {
-	if _, ok := apimodel.UserIDFromContext(ctx); !ok {
+	session, ok := apimodel.SessionFromContext(ctx)
+	if !ok {
 		return generated.GetCurrentSession401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
 	}
-	return generated.GetCurrentSession200JSONResponse{Session: apimodel.SessionFromInternal(mockSession())}, nil
+	return generated.GetCurrentSession200JSONResponse{Session: apimodel.SessionFromInternal(session)}, nil
 }
 
 func (userAPI) ListFlows(ctx context.Context, request generated.ListFlowsRequestObject) (generated.ListFlowsResponseObject, error) {
@@ -135,8 +136,4 @@ func (userAPI) UnlinkGoalFocus(ctx context.Context, request generated.UnlinkGoal
 	}
 	_ = apimodel.UnlinkGoalFocusToInternal(request.Id, request.FocusId)
 	return generated.UnlinkGoalFocus200JSONResponse{Goal: apimodel.GoalFromInternal(mockGoal())}, nil
-}
-
-func unauthorized() generated.UnauthorizedJSONResponse {
-	return generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: "Authentication is required."}
 }

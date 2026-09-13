@@ -8,20 +8,11 @@ import (
 )
 
 var (
-	mockUserID       = core.UserID(uuid.MustParse("018f6f1f-9a7b-7000-8000-000000000001"))
 	mockRootFocusID  = core.FocusID(uuid.MustParse("018f6f1f-9a7b-7000-8000-000000000100"))
 	mockChildFocusID = core.FocusID(uuid.MustParse("018f6f1f-9a7b-7000-8000-000000000101"))
 	mockGoalID       = core.GoalID(uuid.MustParse("018f6f1f-9a7b-7000-8000-000000000200"))
 	mockNow          = time.Date(2026, 9, 8, 12, 0, 0, 0, time.UTC)
 )
-
-func mockUser() core.User {
-	return core.User{ID: mockUserID, Username: "local"}
-}
-
-func mockSession() core.Session {
-	return core.Session{User: mockUser(), ExpiresAt: mockNow.Add(2 * time.Hour)}
-}
 
 func mockGoal() core.Goal {
 	return core.Goal{

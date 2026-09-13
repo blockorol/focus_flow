@@ -448,6 +448,8 @@ export interface operations {
             /** @description Login succeeded and session cookie was issued. */
             200: {
                 headers: {
+                    /** @description HttpOnly session cookie. */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -469,6 +471,8 @@ export interface operations {
             /** @description Logout response was issued. */
             204: {
                 headers: {
+                    /** @description Expired HttpOnly session cookie. */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -487,6 +491,8 @@ export interface operations {
             /** @description Session was refreshed. */
             200: {
                 headers: {
+                    /** @description Refreshed HttpOnly session cookie. */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content: {

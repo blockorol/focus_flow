@@ -10,7 +10,9 @@ import (
 	"syscall"
 
 	"github.com/blockorol/focus_flow/backend/internal/api"
+	"github.com/blockorol/focus_flow/backend/internal/auth"
 	"github.com/blockorol/focus_flow/backend/internal/config"
+	core "github.com/blockorol/focus_flow/backend/internal/model"
 	"github.com/blockorol/focus_flow/backend/internal/storage/postgres"
 )
 
@@ -24,12 +26,20 @@ func run(ctx context.Context) error {
 		return err
 	}
 	defer database.Close()
+	authService, err := auth.NewService(
+		auth.NewConfiguredUserVerifier(core.User{ID: c.Auth.UserID, Username: c.Auth.Username}, c.Auth.Credential),
+		c.Auth.TokenSecret,
+		c.Auth.SessionTTL,
+	)
+	if err != nil {
+		return err
+	}
 	listener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", c.Port))
 	if err != nil {
 		return fmt.Errorf("listen on configured port: %w", err)
 	}
 	log.Printf("API listening on port %d; database startup ping succeeded", c.Port)
-	return api.Serve(ctx, listener, api.NewHandler(c.AllowedOrigins))
+	return api.Serve(ctx, listener, api.NewHandler(c.AllowedOrigins, authService, api.CookieConfigForEnvironment(c.Environment)))
 }
 
 func main() {

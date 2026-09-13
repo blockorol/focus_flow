@@ -8,6 +8,10 @@ services:
       PORT: "8080"
       DATABASE_URL: postgres://focusflow_test:focusflow-test@postgres:5432/focusflow_test?sslmode=disable
       CORS_ALLOWED_ORIGINS: http://localhost:3000
+      APP_USER_ID: 018f6f1f-9a7b-7000-8000-000000000001
+      APP_USERNAME: local
+      APP_PASSWORD: focusflow-test-password
+      APP_TOKEN_SECRET: focusflow-test-token-secret-change-me
       GOOSE_MIGRATION_DIR: /fixtures/migrations
     volumes:
       - ./backend/testdata:/fixtures:ro

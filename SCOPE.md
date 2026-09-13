@@ -490,6 +490,7 @@ Authentication uses one login/password pair configured through environment varia
 Configuration:
 
 ```text
+APP_USER_ID
 APP_USERNAME
 APP_PASSWORD
 APP_TOKEN_SECRET
@@ -507,10 +508,10 @@ Initial public auth endpoints:
 POST /v1/auth/login
 POST /v1/auth/logout
 GET  /v1/auth/me
-POST /v1/auth/reauth
+POST /v1/auth/refresh
 ```
 
-The exact renewal endpoint name may be changed during the BE full MVP OpenAPI design if `refresh` is selected instead of `reauth`.
+The renewal endpoint name is `refresh` for the BE full MVP.
 
 Successful login issues a signed token transported in an HttpOnly cookie.
 

@@ -295,3 +295,13 @@ API stubs use fixed UUID values for deterministic tests and review.
 Event persistence is deferred until CRUD behavior is stable; it is not part of the first BE full MVP points.
 
 ---
+
+## D-030 - Auth configuration and cookie policy
+
+**Decision:** The BE full MVP single-user auth configuration uses `APP_USER_ID`, `APP_USERNAME`, `APP_PASSWORD`, and `APP_TOKEN_SECRET`. `APP_USER_ID` is the configured UUID for the only user while there is no users table. `APP_TOKEN_SECRET` must contain at least 32 characters.
+
+The API session cookie name is `focusflow_session`, matching the OpenAPI `cookieAuth` scheme. Cookie security is derived from `APP_ENV`: local/test cookies use `SameSite=Lax` without `Secure`; production cookies use `SameSite=None` with `Secure` for the separate Vercel frontend and Railway backend origins.
+
+Logout clears the browser cookie. The BE full MVP does not add server-side token revocation storage before the persistence layer exists. Refresh only renews a currently valid token/session.
+
+---

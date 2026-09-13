@@ -182,9 +182,10 @@ frontend/.env.example -> frontend/.env.local
 `backend/.env.local` is optional for the Phase 0 Compose default because `docker-compose.local.yml` provides local database and CORS defaults. Use it for local secrets and overrides such as:
 
 ```dotenv
+APP_USER_ID=018f6f1f-9a7b-7000-8000-000000000001
 APP_USERNAME=local
 APP_PASSWORD=<local password>
-APP_TOKEN_SECRET=<local random secret>
+APP_TOKEN_SECRET=<local random secret, at least 32 characters>
 ```
 
 The local Compose default database URL is internal to Docker Compose:
@@ -205,7 +206,7 @@ Do not put backend secrets into `NEXT_PUBLIC_*` variables.
 
 ## Password configuration
 
-For the BE full MVP, local and production configuration use `APP_PASSWORD` for the single configured user. The backend must convert that value into an in-memory credential/hash representation during configuration/auth setup and must never log it.
+For the BE full MVP, local and production configuration use `APP_USER_ID`, `APP_USERNAME`, `APP_PASSWORD`, and `APP_TOKEN_SECRET` for the single configured user. The backend converts `APP_PASSWORD` into an in-memory credential/hash representation during configuration/auth setup and must never log it. `APP_TOKEN_SECRET` must contain at least 32 characters.
 
 Never pass plaintext passwords as command-line arguments and never commit `.env.local` files.
 
@@ -337,6 +338,7 @@ Use the actual Railway PostgreSQL service name if it differs from `Postgres`.
 Manually configure application-owned backend variables:
 
 ```text
+APP_USER_ID
 APP_USERNAME
 APP_PASSWORD
 APP_TOKEN_SECRET
@@ -344,7 +346,7 @@ APP_ENV
 CORS_ALLOWED_ORIGINS
 ```
 
-Future authentication work may add cookie-related variables. Document them here when they are introduced.
+Cookie security is derived from `APP_ENV`: local/test cookies use `SameSite=Lax` without `Secure`; production cookies use `SameSite=None` with `Secure`.
 
 ## Production migrations
 

@@ -328,7 +328,7 @@ A human explicitly runs `goose down`/`down-to` when a database rollback is requi
 
 The application uses username/password login backed by environment configuration.
 
-The runtime environment stores `APP_PASSWORD` for the single configured user. Configuration loading converts it into an in-memory credential/hash representation and must not log it.
+The runtime environment stores `APP_USER_ID`, `APP_USERNAME`, `APP_PASSWORD`, and `APP_TOKEN_SECRET` for the single configured user. Configuration loading converts `APP_PASSWORD` into an in-memory credential/hash representation and must not log it.
 
 Authentication is implemented behind a verifier/provider abstraction so the configured-user implementation can later be replaced by database-backed passwords, Google login, or another provider.
 
