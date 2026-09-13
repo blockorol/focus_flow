@@ -81,10 +81,11 @@ Blocked locally:
 - BE full MVP point 5 service layer without database persistence is complete in the working tree.
 - BE full MVP point 6 PostgreSQL storage implementation with goose migrations is complete in the working tree.
 - Phase 2 frontend/backend/integration plan is created in `docs/exec-plans/phase-2-frontend-backend-integration.md`.
+- Phase 2 step 1.1 frontend design foundation is complete in the working tree.
 
 ## Next action
 
-Next planned point is Phase 2 step 1.1: Frontend design foundation. Do not start implementation until the user approves continuing.
+Phase 2 step 1.1 frontend design foundation is complete and awaiting review/commit checkpoint. Next planned point is Phase 2 step 1.2: API client boundary and mock mode. Do not start implementation until the user approves continuing.
 
 ## BE full MVP point 1 result
 
@@ -231,3 +232,25 @@ Validation:
 Known follow-up:
 
 - Refine the public API contract so `POST /v1/focuses` can return a clean not-found response when `parentId` does not exist.
+## Phase 2 step 1.1 result
+
+Completed:
+
+- Added frontend functional design tokens.
+- Added shared UI primitives for buttons, form controls, cards, badges, and reusable state blocks.
+- Updated the home page to preview the design foundation without product data flow.
+- Added UI primitive smoke tests.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+
+Not done in this step:
+
+- no API client mock mode;
+- no auth UI;
+- no app shell routing;
+- no Flow, Focus, or Goal product behavior.

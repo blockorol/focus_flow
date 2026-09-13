@@ -1,6 +1,6 @@
 # Phase 2 - Frontend MVP, backend hardening, and integration
 
-Status: planned on 2026-09-13. Implementation has not started.
+Status: step 1.1 complete and awaiting review on 2026-09-13.
 
 ## Goal
 
@@ -52,7 +52,7 @@ If backend hardening reveals a persistence model issue, stop before changing the
 
 #### 1.1 Frontend design foundation
 
-- [ ] **Goal:** create the shared UI foundation before building screens.
+- [x] **Goal:** create the shared UI foundation before building screens.
 - **Files/packages expected to change:** frontend styling files, shared UI components, component tests.
 - **Implementation notes:** add functional color/tokens; define simple spacing/radius/shadow conventions; add shared primitives such as `Button`, `Input`, `Textarea`, `Select`, `Card`, `Badge`, `EmptyState`, `ErrorState`, and `LoadingState`.
 - **Commands/checks:** frontend typecheck; frontend component/smoke tests; frontend lint/build if stable at this point.
@@ -266,3 +266,21 @@ If backend hardening reveals a persistence model issue, stop before changing the
 - Do not hand-edit generated files to repair drift.
 - Do not add repository certificate workarounds if Docker/npm network access fails.
 - Do not change database schema without a reviewed migration and explicit approval when the model changes.
+## Step 1.1 completion notes
+
+- Added frontend functional design tokens in `frontend/src/app/globals.css` for app background, surfaces, borders, text, action, danger, warning, success, info, radius, and card shadow.
+- Added shared UI primitives under `frontend/src/ui/`: `Button`, `Input`, `Textarea`, `Select`, `Field`, `FieldLabel`, `Card`, `Badge`, `EmptyState`, `ErrorState`, `LoadingState`, and `cn`.
+- Updated the placeholder home page to render a small design-foundation preview using the shared components, without adding product data flow.
+- Added server-render smoke tests for the UI primitives and `cn` helper.
+- Updated Vitest config so frontend `.test.tsx` files are included.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
