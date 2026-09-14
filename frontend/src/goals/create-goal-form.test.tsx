@@ -6,11 +6,10 @@ describe('CreateGoalForm', () => {
   it('renders Goal creation fields', () => {
     const html = renderToStaticMarkup(<CreateGoalForm onCreate={async () => undefined} />);
 
-    expect(html).toContain('Create Goal');
     expect(html).toContain('Type');
     expect(html).toContain('Description');
     expect(html).toContain('Status override');
     expect(html).toContain('Derived');
+    expect(html).toContain('Add Goal');
   });
 });
-

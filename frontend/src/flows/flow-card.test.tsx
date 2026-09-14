@@ -14,7 +14,8 @@ describe('FlowCard', () => {
     expect(html).toContain('Child focuses');
     expect(html).toContain('Goals');
     expect(html).toContain(`/focuses/${flowFixture().id}`);
-    expect(html).toContain('Open the Focus aggregate.');
+    expect(html).toContain('Open');
+    expect(html).not.toContain('Updated');
   });
 
   it('renders fallback copy for an empty description', () => {

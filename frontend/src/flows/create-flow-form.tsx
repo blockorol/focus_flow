@@ -2,21 +2,21 @@
 
 import { useState, type FormEvent } from 'react';
 import type { CreateFlowInput, FocusStatus } from '@/api';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Field, Input, Select, Textarea } from '@/ui';
+import { Button, Field, Input, Select, Textarea } from '@/ui';
 
 const statuses: FocusStatus[] = ['idea', 'planned', 'active', 'paused', 'waiting', 'done', 'cancelled'];
 
 type CreateFlowFormProps = {
   onCreate(input: CreateFlowInput): Promise<void>;
+  onCreated?(): void;
 };
 
-export function CreateFlowForm({ onCreate }: CreateFlowFormProps) {
+export function CreateFlowForm({ onCreate, onCreated }: CreateFlowFormProps) {
   const [name, setName] = useState('');
   const [status, setStatus] = useState<FocusStatus>('planned');
   const [tags, setTags] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [createdMessage, setCreatedMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -29,7 +29,6 @@ export function CreateFlowForm({ onCreate }: CreateFlowFormProps) {
 
     setSubmitting(true);
     setError(null);
-    setCreatedMessage(null);
     try {
       await onCreate({
         name: trimmedName,
@@ -44,7 +43,7 @@ export function CreateFlowForm({ onCreate }: CreateFlowFormProps) {
       setStatus('planned');
       setTags('');
       setDescription('');
-      setCreatedMessage('Flow created.');
+      onCreated?.();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Flow could not be created.');
     } finally {
@@ -53,45 +52,32 @@ export function CreateFlowForm({ onCreate }: CreateFlowFormProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div>
-          <CardTitle>Create Flow</CardTitle>
-          <CardDescription>Start from one root Focus and add deeper structure later.</CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <form className="grid gap-4" onSubmit={submit}>
-          <Field label="Name" error={error ?? undefined}>
-            <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Job Search" disabled={submitting} />
-          </Field>
+    <form className="grid gap-4" onSubmit={submit}>
+      <Field label="Name" error={error ?? undefined}>
+        <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Job Search" disabled={submitting} />
+      </Field>
 
-          <Field label="Status">
-            <Select value={status} onChange={(event) => setStatus(event.target.value as FocusStatus)} disabled={submitting}>
-              {statuses.map((nextStatus) => (
-                <option key={nextStatus} value={nextStatus}>
-                  {nextStatus}
-                </option>
-              ))}
-            </Select>
-          </Field>
+      <Field label="Status">
+        <Select value={status} onChange={(event) => setStatus(event.target.value as FocusStatus)} disabled={submitting}>
+          {statuses.map((nextStatus) => (
+            <option key={nextStatus} value={nextStatus}>
+              {nextStatus}
+            </option>
+          ))}
+        </Select>
+      </Field>
 
-          <Field label="Tags" description="Separate tags with commas.">
-            <Input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="career, interview" disabled={submitting} />
-          </Field>
+      <Field label="Tags" description="Separate tags with commas.">
+        <Input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="career, interview" disabled={submitting} />
+      </Field>
 
-          <Field label="Description">
-            <Textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="What belongs inside this Flow?" disabled={submitting} />
-          </Field>
+      <Field label="Description">
+        <Textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="What belongs inside this Flow?" disabled={submitting} />
+      </Field>
 
-          {createdMessage ? <p className="text-sm font-medium text-success">{createdMessage}</p> : null}
-
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Creating...' : 'Create Flow'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+      <Button type="submit" disabled={submitting}>
+        {submitting ? 'Creating...' : 'Create Flow'}
+      </Button>
+    </form>
   );
 }
-

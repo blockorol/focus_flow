@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppAPIError, type CreateFlowInput, type Focus, type FocusPage } from '@/api';
 import { getBrowserAPI } from '@/api/browser';
-import { PageHeader } from '@/app-shell';
-import { Button, EmptyState, ErrorState, LoadingState } from '@/ui';
+import { Button, EmptyState, ErrorState, LoadingState, Modal } from '@/ui';
 import { CreateFlowForm } from './create-flow-form';
 import { FlowCard } from './flow-card';
 
@@ -17,6 +16,7 @@ export function FlowDashboard() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const loadFlows = useCallback(async (cursor?: string) => {
     const api = getBrowserAPI();
@@ -67,17 +67,26 @@ export function FlowDashboard() {
 
   return (
     <div className="grid gap-6">
-      <PageHeader
-        eyebrow="Flows"
-        title="Root Focuses for the work that matters."
-        description="Mock mode lists root Focuses as Flows and lets you create the next one before persistence is connected."
-      />
+      <header className="grid gap-5 rounded-card border border-border bg-surface-raised p-5 shadow-card sm:p-6 lg:grid-cols-[1fr_12rem]">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold uppercase tracking-widest text-action">Flows</p>
+          <h1 className="mt-3 max-w-4xl text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Root Focuses for the work that matters.</h1>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-text-muted">Create root Focuses, then break them into child Focuses and Goals.</p>
+        </div>
+        <div className="grid content-start gap-2 justify-self-start lg:justify-self-end">
+          <Button onClick={() => setCreateModalOpen(true)}>
+            Create Flow
+          </Button>
+        </div>
+      </header>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(280px,380px)_1fr]">
-        <CreateFlowForm onCreate={createFlow} />
+      <Modal open={createModalOpen} title="Create Flow" description="Start from one root Focus and add deeper structure later." onClose={() => setCreateModalOpen(false)}>
+        <CreateFlowForm onCreate={createFlow} onCreated={() => setCreateModalOpen(false)} />
+      </Modal>
 
+      <div className="grid gap-5">
         <section className="grid content-start gap-4">
-          {loading ? <LoadingState title="Loading Flows" description="Reading mock workspace data." /> : null}
+          {loading ? <LoadingState title="Loading Flows" description="Reading your workspace data." /> : null}
 
           {error ? (
             <ErrorState title="Flows could not be loaded" description={error}>
@@ -87,7 +96,13 @@ export function FlowDashboard() {
             </ErrorState>
           ) : null}
 
-          {!loading && !error && flows.length === 0 ? <EmptyState title="No Flows yet" description="Create your first Flow to start grouping Focuses." /> : null}
+          {!loading && !error && flows.length === 0 ? (
+            <EmptyState title="No Flows yet" description="Create your first Flow to start grouping Focuses.">
+              <Button size="sm" onClick={() => setCreateModalOpen(true)}>
+                Create Flow
+              </Button>
+            </EmptyState>
+          ) : null}
 
           {!loading && !error && flows.length > 0 ? (
             <div className="grid gap-4">

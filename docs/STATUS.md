@@ -90,6 +90,11 @@ Blocked locally:
 - Phase 2 step 1.7 Focus edit UI is complete in the working tree.
 - Phase 2 step 1.8 Goals UI is complete in the working tree.
 - Phase 2 step 1.9 frontend visual polish is complete in the working tree.
+- Phase 2 step 1.10 shared modal foundation and Flow creation modal is complete in the working tree.
+- Phase 2 step 1.11 Focus edit and child Focus creation modals are complete in the working tree.
+- Phase 2 step 1.12 Goal creation and editing modals are complete in the working tree.
+- Phase 2 step 1.13 Focus page color accent pass is complete in the working tree.
+- Phase 2 step 1.14 Focus page UI copy and card interaction polish is complete in the working tree.
 - Phase 2 step 2.1 Docker Compose runtime verification is complete.
 - Phase 2 step 2.2 local migrations verification is complete.
 - Phase 2 step 2.3 real HTTP auth verification is complete.
@@ -98,7 +103,7 @@ Blocked locally:
 
 ## Next action
 
-Phase 2 frontend MVP with mocks and backend hardening are complete through step 2.5 and awaiting review/commit checkpoint. Next planned point is Phase 2 step 2.6: Docker build verification. Do not start implementation until the user approves continuing.
+Phase 2 frontend MVP with mocks and backend hardening are complete through step 2.5. The active Focus page UI/UX correction pass is complete through step 1.14. Next planned point is Phase 2 step 2.6: Docker build verification, or Phase 2 step 3.1 real API client switch if the user wants to connect frontend and backend first.
 
 ## BE full MVP point 1 result
 
@@ -588,3 +593,151 @@ Not done in this step:
 
 - no backend error behavior cleanup;
 - no frontend/backend browser integration.
+
+## Phase 2 step 1.10 result
+
+Completed:
+
+- Added a shared frontend modal primitive with dialog semantics, overlay styling, title/description slots, and close action.
+- Exported the modal from the shared UI package.
+- Refactored the Flow creation form so it is a reusable form without its own Card shell.
+- Replaced the always-visible Flow creation column with a `Create Flow` page action and modal.
+- Added a `Create Flow` action to the empty Flows state.
+- Closed the modal after successful Flow creation.
+- Replaced mock-specific primary Flows dashboard copy with product-facing copy.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"`.
+- `git diff --check`.
+
+Not done in this step:
+
+- no Focus edit modal yet;
+- no child Focus creation modal yet;
+- no Goal creation/editing modal yet;
+- no Focus color accent pass yet;
+- no browser manual review recorded.
+
+## Phase 2 step 1.11 result
+
+Completed:
+
+- Refactored `FocusEditForm` into a reusable form without its own Card shell.
+- Refactored `CreateChildFocusForm` into a reusable form without its own Card shell.
+- Added `Edit Focus` as a Focus page header action.
+- Added `Create child Focus` as a Child Focuses section action and empty-state action.
+- Added modal wrappers for Focus editing and child Focus creation.
+- Closed modals after successful save/create and reloaded Focus data through the existing frontend API boundary.
+- Removed persistent edit/create forms from the Focus page layout.
+- Replaced mock-specific Focus loading copy with product-facing copy.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run src/focuses/focus-edit-form.test.tsx src/focuses/create-child-focus-form.test.tsx`.
+- `npm --prefix frontend run build`.
+- `npm --prefix frontend test -- --run`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"`.
+- `git diff --check`.
+
+Not done in this step:
+
+- no Goal creation/editing modal yet;
+- no Focus color accent pass yet;
+- no child Focus card interaction polish yet;
+- no browser manual review recorded.
+
+## Phase 2 step 1.12 result
+
+Completed:
+
+- Refactored `CreateGoalForm` into a reusable form without its own Card shell.
+- Added `EditGoalForm` for modal-based Goal editing.
+- Replaced the always-visible `Create Goal` form with a section action and modal.
+- Replaced inline Goal editing in `GoalCard` with modal editing.
+- Kept Goal cards display-focused while preserving delete and link/unlink actions.
+- Added expandable linked Focus display to Goal cards.
+- Rendered linked Focuses as clickable items with status badges and mini status meters that navigate to their Focus page.
+- Reworked Goal progress into one segmented visual bar with grouped status chips.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run src/focuses/focus-summary.test.tsx src/focuses/child-focus-card.test.tsx src/goals/create-goal-form.test.tsx src/goals/edit-goal-form.test.tsx src/goals/goal-card.test.tsx src/goals/goal-progress.test.tsx`.
+- `npm --prefix frontend run build`.
+- `npm --prefix frontend test -- --run`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"`.
+- `git diff --check`.
+
+Not done in this step:
+
+- no browser manual review recorded.
+
+## Phase 2 step 1.13 result
+
+Completed:
+
+- Replaced the large Focus summary card with a compact Focus info panel.
+- Removed duplicated Focus title from the Focus info panel.
+- Removed `Created` and `Updated` dates from the Focus page summary.
+- Moved status and tags into the compact Focus info panel.
+- Kept empty feedback hidden.
+- Removed raw color value and `Color marker` copy from read-only Focus page display.
+- Applied Focus color as a left-border visual accent on the Focus info panel.
+- Applied child Focus color as a left-border visual accent on child Focus cards.
+- Added quick Focus status change without opening the edit modal.
+- Removed the `Child Focuses` title while preserving the `Create child Focus` action.
+- Made child Focus cards clickable as a whole and route to the Focus page.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run src/focuses/focus-summary.test.tsx src/focuses/child-focus-card.test.tsx src/goals/create-goal-form.test.tsx src/goals/edit-goal-form.test.tsx src/goals/goal-card.test.tsx src/goals/goal-progress.test.tsx`.
+- `npm --prefix frontend run build`.
+- `npm --prefix frontend test -- --run`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"`.
+- `git diff --check`.
+
+Not done in this step:
+
+- no browser manual review recorded;
+- no full app copy polish beyond the Focus page.
+
+## Phase 2 step 1.14 result
+
+Completed:
+
+- Added a Focus page header with Focus label, root-aware path/breadcrumb, title, description, and right-side actions.
+- Kept `Back to Flows` only for root Flow pages.
+- Applied the Focus color accent to the full header block.
+- Removed generic Focus review copy, raw color text, created/updated dates, and empty feedback from normal Focus page display.
+- Renamed creation actions to `Add child Focus` and `Add Goal`.
+- Positioned modals near the top with a wider review-friendly layout.
+- Changed Goal cards to compact collapsed rows with type and mini progress, expandable to the detailed view.
+- Consolidated linked Focus controls into one expanded section with clickable Focus links and mini status meters.
+- Added Goal delete confirmation to avoid accidental deletes.
+- Kept generated OpenAPI DTO usage isolated to `frontend/src/api`.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run src/focuses/focus-summary.test.tsx src/focuses/child-focus-card.test.tsx src/focuses/create-child-focus-form.test.tsx src/goals/create-goal-form.test.tsx src/goals/edit-goal-form.test.tsx src/goals/goal-card.test.tsx src/goals/goal-progress.test.tsx`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\['schemas'\]" frontend/src --glob "!api/generated/**"`.
+- `git diff --check`.
+
+Not done in this step:
+
+- no backend/API changes;
+- no real frontend/backend browser integration;
+- no manual browser review recorded by Codex because the user's frontend server is already running on port 3000.

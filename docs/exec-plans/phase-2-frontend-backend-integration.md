@@ -1,6 +1,6 @@
 # Phase 2 - Frontend MVP, backend hardening, and integration
 
-Status: frontend MVP with mocks is complete and backend hardening is complete through step 2.5 on 2026-09-14.
+Status: frontend MVP with mocks is complete, backend hardening is complete through step 2.5, and Focus page UI copy/card interaction polish is complete on 2026-09-14.
 
 ## Goal
 
@@ -121,6 +121,56 @@ If backend hardening reveals a persistence model issue, stop before changing the
 - **Implementation notes:** improve spacing, cards, empty/loading/error states, focus/hover states, active sidebar states, and visual hierarchy; keep colors routed through tokens/functional classes.
 - **Commands/checks:** frontend lint; frontend typecheck; frontend tests; frontend production build; manual UI pass.
 - **Acceptance criteria:** the mock-first frontend is coherent enough for product review and remains component-based.
+
+#### 1.10 Shared modal foundation and Flow creation modal
+
+- [x] **Goal:** replace always-visible Flow creation with an explicit modal action.
+- **Files/packages expected to change:** shared UI modal component, Flow dashboard, Flow create form, tests.
+- **Implementation notes:** add a reusable modal primitive, keep forms separate from their shell, add a `Create Flow` page action, and close the modal after successful creation.
+- **Commands/checks:** frontend typecheck; frontend lint; frontend tests; frontend production build; generated API type isolation check.
+- **Acceptance criteria:** Flow creation opens from a button, renders in a modal, still creates through the frontend API boundary, and no generated API DTOs leak outside `frontend/src/api`.
+
+#### 1.11 Focus edit and child Focus creation modals
+
+- [x] **Goal:** move Focus edit and child Focus creation out of the page column into explicit modal actions.
+- **Files/packages expected to change:** Focus dashboard, Focus edit form, child Focus create form, tests.
+- **Implementation notes:** keep the Focus summary as the primary read surface, add `Edit Focus` and `Create child Focus` actions, close modals after successful save/create, and keep form components shell-free.
+- **Commands/checks:** frontend typecheck; frontend lint; frontend tests; frontend production build; generated API type isolation check.
+- **Acceptance criteria:** Focus page reads as data-first, with edit/create actions opening modals instead of occupying persistent page space.
+
+#### 1.12 Goal creation and editing modals
+
+- [x] **Goal:** move Goal creation and editing into modals.
+- **Files/packages expected to change:** Goals panel, Goal create form, Goal card, tests.
+- **Implementation notes:** add `Create Goal` as a section action, replace inline Goal editing with `Edit Goal` modal behavior, and keep link/unlink controls visible on cards for quick review.
+- **Commands/checks:** frontend typecheck; frontend lint; frontend tests; frontend production build; generated API type isolation check.
+- **Acceptance criteria:** Goal cards remain display-focused, and create/edit actions happen in modal editors.
+
+#### 1.13 Focus color accent pass
+
+- [x] **Goal:** use Focus color as a visual accent instead of rendering color text in normal Focus page display.
+- **Files/packages expected to change:** Focus summary, child Focus card, functional styling helpers/tokens, tests.
+- **Implementation notes:** use `#0f766e` as the fallback action/accent color, apply `focus.color` only to safe visual accents such as a left border, and avoid displaying raw color strings in read-only Focus page views.
+- **Commands/checks:** frontend typecheck; frontend lint; frontend tests; frontend production build.
+- **Acceptance criteria:** color markers improve Focus page scanability without exposing raw hex values in normal read views.
+
+#### 1.14 UI copy and card interaction polish
+
+- [x] **Goal:** make the mock-first UI feel like product UI.
+- **Files/packages expected to change:** Flow dashboard/cards, Focus dashboard/cards, Goal cards, app shell copy, tests if behavior changes.
+- **Implementation notes:** remove mock/debug copy from primary views, make cards more directly actionable, improve empty-state actions, and preserve functional color usage. Focus page polish includes a path-aware Focus header, header-level color accent, modal actions for edit/add flows, compact Goal rows, expandable linked Focus details, and delete confirmation.
+- **Commands/checks:** frontend typecheck; frontend lint; frontend tests; frontend production build; manual UI pass.
+- **Acceptance criteria:** the UI is clearer for manual review while keeping mock mode as a development feature behind configuration.
+Completion notes:
+
+- Added a custom Focus page header with the Focus label, path/breadcrumb, title, description, and right-side vertical actions.
+- Replaced the non-root `Back to Flows` affordance with a Focus path; root Flows keep `Back to Flows`.
+- Moved the Focus color accent to the full header block and removed raw color/date/debug copy from normal read views.
+- Renamed child Focus and Goal creation actions to `Add child Focus` and `Add Goal`.
+- Moved create/edit forms into wider top-positioned modals.
+- Changed Goal cards to collapsed one-line rows with type and mini progress by default, with details expanding on click.
+- Consolidated linked Focus display into one expandable details section with clickable Focus links and mini status meters.
+- Added a delete confirmation prompt for Goal deletion.
 
 ### 2. Backend hardening
 
@@ -613,3 +663,137 @@ Notes:
 
 - The temporary HTTP smoke script was written under `.tmp/`, executed, and removed after the check.
 - The local Docker Compose backend and PostgreSQL services were left running for the next backend verification step.
+
+## Step 1.10 completion notes
+
+- Added a shared `Modal` primitive under `frontend/src/ui/` with dialog semantics, overlay styling, title/description slots, close action, and reusable content area.
+- Exported the modal from the shared UI package.
+- Refactored `CreateFlowForm` into a shell-free form component so it can be used inside modal layouts.
+- Replaced the always-visible Flow creation column with a `Create Flow` page action that opens the modal.
+- Added a `Create Flow` action to the empty Flows state.
+- Closed the modal after a successful Flow creation and preserved the existing frontend API boundary behavior.
+- Replaced mock-specific primary page copy with product-facing copy for the Flows dashboard.
+- Added modal rendering tests and kept the existing Flow creation form rendering test.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"` showed generated OpenAPI usage only in `frontend/src/api/mappers.ts` and `frontend/src/api/real.ts`.
+- `git diff --check`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+- The frontend dev server was not started because port `3000` was already in use by the user's local frontend session.
+
+## Step 1.11 completion notes
+
+- Refactored `FocusEditForm` into a shell-free form component so the Focus page can control where the editor is shown.
+- Refactored `CreateChildFocusForm` into a shell-free form component for modal usage.
+- Added `Edit Focus` as a Focus page header action.
+- Added `Create child Focus` as a Child Focuses section action and as an empty-state action.
+- Added modal wrappers for Focus editing and child Focus creation on the Focus details page.
+- Closed the relevant modal after a successful Focus save or child Focus creation.
+- Removed the persistent left-column edit/create forms so the Focus page reads as data-first.
+- Replaced mock-specific Focus loading copy with product-facing copy.
+- Kept generated OpenAPI DTOs isolated to the frontend API boundary.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run src/focuses/focus-edit-form.test.tsx src/focuses/create-child-focus-form.test.tsx`.
+- `npm --prefix frontend run build`.
+- `npm --prefix frontend test -- --run`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"` showed generated OpenAPI usage only in `frontend/src/api/mappers.ts` and `frontend/src/api/real.ts`.
+- `git diff --check`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+- The frontend dev server was not started because port `3000` was already in use by the user's local frontend session.
+
+## Step 1.12 completion notes
+
+- Refactored `CreateGoalForm` into a shell-free form component for modal usage.
+- Added `EditGoalForm` as a dedicated Goal edit form component.
+- Replaced the always-visible Goal creation form with a `Create Goal` section action and modal.
+- Replaced inline Goal editing inside `GoalCard` with an `Edit Goal` modal launched from the card.
+- Kept Goal cards display-focused while preserving delete and link/unlink actions.
+- Added expandable linked Focus display inside Goal cards.
+- Rendered linked Focuses as clickable items with status badges and mini status meters that navigate to their Focus page.
+- Reworked Goal progress into one segmented visual bar with grouped status chips for done, in-progress, planned, and cancelled states.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run src/focuses/focus-summary.test.tsx src/focuses/child-focus-card.test.tsx src/goals/create-goal-form.test.tsx src/goals/edit-goal-form.test.tsx src/goals/goal-card.test.tsx src/goals/goal-progress.test.tsx`.
+- `npm --prefix frontend run build`.
+- `npm --prefix frontend test -- --run`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"` showed generated OpenAPI usage only in `frontend/src/api/mappers.ts` and `frontend/src/api/real.ts`.
+- `git diff --check`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+- The frontend dev server was not started because port `3000` was already in use by the user's local frontend session.
+
+## Step 1.13 completion notes
+
+- Replaced the large Focus summary card with a compact Focus info panel.
+- Removed duplicated Focus title from the Focus info panel; the Focus name remains in the page header.
+- Removed `Created` and `Updated` date copy from the Focus page summary.
+- Moved status and tags into the compact Focus info panel.
+- Kept empty feedback hidden in the Focus info panel.
+- Removed the raw color value and `Color marker` copy from read-only Focus page display.
+- Applied the Focus color as a left-border visual accent on the Focus info panel.
+- Applied child Focus colors as left-border visual accents on child Focus cards, with `#0f766e` as the fallback accent.
+- Added a status selector to the Focus info panel so status can be changed without opening the edit modal.
+- Removed the `Child Focuses` title from the Focus page while keeping the `Create child Focus` action.
+- Made child Focus cards clickable as a whole and route to the child Focus page.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run src/focuses/focus-summary.test.tsx src/focuses/child-focus-card.test.tsx src/goals/create-goal-form.test.tsx src/goals/edit-goal-form.test.tsx src/goals/goal-card.test.tsx src/goals/goal-progress.test.tsx`.
+- `npm --prefix frontend run build`.
+- `npm --prefix frontend test -- --run`.
+- `rg -n "generated/schema|components\\['schemas'\\]" frontend/src --glob "!api/generated/**"` showed generated OpenAPI usage only in `frontend/src/api/mappers.ts` and `frontend/src/api/real.ts`.
+- `git diff --check`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+- The frontend dev server was not started because port `3000` was already in use by the user's local frontend session.
+
+## Step 1.14 completion notes
+
+- Added a custom Focus page header with the Focus label, root-aware path/breadcrumb, title, description, and right-side vertical actions.
+- Replaced the non-root `Back to Flows` affordance with a Focus path; root Flows keep `Back to Flows`.
+- Moved the Focus color accent to the full header block and removed raw color/date/debug copy from normal read views.
+- Renamed child Focus and Goal creation actions to `Add child Focus` and `Add Goal`.
+- Moved create/edit forms into wider top-positioned modals.
+- Changed Goal cards to collapsed one-line rows with type and mini progress by default, with details expanding on click.
+- Consolidated linked Focus display into one expandable details section with clickable Focus links and mini status meters.
+- Added a delete confirmation prompt for Goal deletion.
+- Kept generated OpenAPI DTO usage isolated to `frontend/src/api`.
+
+Validation:
+
+- `npm --prefix frontend run typecheck`.
+- `npm --prefix frontend run lint`.
+- `npm --prefix frontend test -- --run src/focuses/focus-summary.test.tsx src/focuses/child-focus-card.test.tsx src/focuses/create-child-focus-form.test.tsx src/goals/create-goal-form.test.tsx src/goals/edit-goal-form.test.tsx src/goals/goal-card.test.tsx src/goals/goal-progress.test.tsx`.
+- `npm --prefix frontend test -- --run`.
+- `npm --prefix frontend run build`.
+- `rg -n "generated/schema|components\['schemas'\]" frontend/src --glob "!api/generated/**"` showed generated OpenAPI usage only in `frontend/src/api/mappers.ts` and `frontend/src/api/real.ts`.
+- `git diff --check`.
+
+Notes:
+
+- Vitest and Next build needed to run outside the sandbox on this Windows machine because the sandbox blocked child process spawning with `spawn EPERM`.
+- The frontend dev server was not started because port `3000` was already in use by the user's local frontend session.

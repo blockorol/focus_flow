@@ -4,15 +4,27 @@ import type { Focus } from '@/api';
 import { FocusSummary } from './focus-summary';
 
 describe('FocusSummary', () => {
-  it('renders core Focus fields without generated API DTOs', () => {
-    const html = renderToStaticMarkup(<FocusSummary focus={focusFixture()} />);
+  it('renders compact Focus metadata without duplicated header fields', () => {
+    const html = renderToStaticMarkup(<FocusSummary focus={focusFixture()} onStatusChange={() => undefined} />);
 
-    expect(html).toContain('Workato interview loop');
     expect(html).toContain('Planned');
-    expect(html).toContain('Prepare notes and collect feedback.');
-    expect(html).toContain('No feedback yet.');
-    expect(html).toContain('#175cd3');
+    expect(html).not.toContain('Prepare notes and collect feedback.');
+    expect(html).not.toContain('Feedback');
+    expect(html).not.toContain('Color marker');
+    expect(html).not.toContain('Created');
+    expect(html).not.toContain('Updated');
+    expect(html).not.toContain('Workato interview loop');
     expect(html).toContain('interview');
+    expect(html).toContain('Status');
+    expect(html).toContain('Child focuses');
+    expect(html).toContain('Goals');
+  });
+
+  it('renders feedback when it exists', () => {
+    const html = renderToStaticMarkup(<FocusSummary focus={focusFixture({ feedback: 'Follow up after the interview.' })} />);
+
+    expect(html).toContain('Feedback');
+    expect(html).toContain('Follow up after the interview.');
   });
 });
 
@@ -34,4 +46,3 @@ export function focusFixture(overrides: Partial<Focus> = {}): Focus {
     ...overrides,
   };
 }
-

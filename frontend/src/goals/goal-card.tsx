@@ -1,55 +1,31 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
-import type { Focus, FocusStatus, Goal, GoalType, UpdateGoalInput } from '@/api';
-import { flowStatusLabel } from '@/flows';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Field, Select, Textarea } from '@/ui';
-import { buildUpdateGoalInput } from './goal-forms';
-import { GoalProgress } from './goal-progress';
-
-const goalTypes: GoalType[] = ['primary', 'secondary'];
-const statuses: FocusStatus[] = ['idea', 'planned', 'active', 'paused', 'waiting', 'done', 'cancelled'];
+import Link from 'next/link';
+import { useState } from 'react';
+import type { Focus, FocusStatus, Goal } from '@/api';
+import { flowStatusLabel, flowStatusTone } from '@/flows';
+import { Badge, Button, Card, CardContent } from '@/ui';
+import { GoalProgress, MiniGoalProgress } from './goal-progress';
 
 type GoalCardProps = {
   goal: Goal;
   linkCandidates: Focus[];
-  onSave(goalId: string, input: UpdateGoalInput): Promise<void>;
+  onEdit(goal: Goal): void;
   onDelete(goalId: string): Promise<void>;
   onLink(goalId: string, focusId: string): Promise<void>;
   onUnlink(goalId: string, focusId: string): Promise<void>;
 };
 
-export function GoalCard({ goal, linkCandidates, onSave, onDelete, onLink, onUnlink }: GoalCardProps) {
-  const [editing, setEditing] = useState(false);
-  const [type, setType] = useState<GoalType>(goal.type);
-  const [description, setDescription] = useState(goal.description);
-  const [statusOverride, setStatusOverride] = useState<FocusStatus | ''>(goal.statusOverride ?? '');
+export function GoalCard({ goal, linkCandidates, onEdit, onDelete, onLink, onUnlink }: GoalCardProps) {
+  const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [linkingFocusId, setLinkingFocusId] = useState<string | null>(null);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const input = buildUpdateGoalInput({ type, description, statusOverride });
-    if (!input) {
-      setError('Goal description is required.');
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    try {
-      await onSave(goal.id, input);
-      setEditing(false);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Goal could not be updated.');
-    } finally {
-      setSaving(false);
-    }
-  }
+  const linkedFocuses = linkCandidates.filter((candidate) => goal.linkedFocusIds.includes(candidate.id));
+  const availableFocuses = linkCandidates.filter((candidate) => !goal.linkedFocusIds.includes(candidate.id));
 
   async function remove() {
+    if (!window.confirm('Are you sure you want to delete this Goal?')) return;
     setDeleting(true);
     setError(null);
     try {
@@ -77,83 +53,94 @@ export function GoalCard({ goal, linkCandidates, onSave, onDelete, onLink, onUnl
   }
 
   return (
-    <Card className="hover:shadow-card-hover">
-      <CardHeader>
-        <div>
-          <CardTitle>{goal.description}</CardTitle>
-          <p className="mt-1 text-sm text-text-muted">{goal.statusOverride ? `Manual status: ${flowStatusLabel(goal.statusOverride)}` : 'Derived from linked Focuses'}</p>
-        </div>
-        <Badge tone={goal.type === 'primary' ? 'info' : 'neutral'}>{goal.type}</Badge>
-      </CardHeader>
+    <Card className="p-0 hover:shadow-card-hover sm:p-0">
+      <div className="p-4 sm:p-5">
+        <button className="grid min-w-0 gap-2 text-left" type="button" onClick={() => setExpanded((current) => !current)} aria-expanded={expanded}>
+          <span className="flex min-w-0 flex-wrap items-center gap-2">
+            <span className="min-w-0 truncate text-sm font-semibold text-text-primary">{goal.description}</span>
+            <Badge tone={goal.type === 'primary' ? 'info' : 'neutral'}>{goal.type}</Badge>
+            {goal.statusOverride ? <Badge tone={flowStatusTone(goal.statusOverride)}>{flowStatusLabel(goal.statusOverride)}</Badge> : null}
+          </span>
+          <MiniGoalProgress progress={goal.progress} />
+        </button>
+      </div>
 
-      <CardContent className="grid gap-4">
-        <GoalProgress progress={goal.progress} />
+      {expanded ? (
+        <CardContent className="grid gap-4 border-t border-border p-4 sm:p-5">
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
+            <p className="text-sm text-text-muted">{goal.statusOverride ? `Manual status: ${flowStatusLabel(goal.statusOverride)}` : 'Derived from linked Focuses'}</p>
+            <div className="flex justify-start gap-2 sm:justify-end">
+              <Button variant="secondary" size="sm" onClick={() => onEdit(goal)}>
+                Edit
+              </Button>
+              <Button variant="danger" size="sm" onClick={() => void remove()} disabled={deleting}>
+                {deleting ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          </div>
+          <GoalProgress progress={goal.progress} />
 
-        {linkCandidates.length > 0 ? (
-          <div className="grid gap-2">
+          <div className="grid gap-3 rounded-control border border-border bg-surface p-3">
             <p className="text-xs font-medium uppercase tracking-wide text-text-subtle">Linked Focuses</p>
-            <div className="flex flex-wrap gap-2">
-              {linkCandidates.map((candidate) => {
-                const linked = goal.linkedFocusIds.includes(candidate.id);
-                return (
-                  <Button key={candidate.id} variant={linked ? 'secondary' : 'ghost'} size="sm" onClick={() => void toggleLink(candidate)} disabled={linkingFocusId === candidate.id}>
-                    {linked ? 'Unlink' : 'Link'} {candidate.name}
+            {linkedFocuses.length > 0 ? (
+              <div className="grid gap-2">
+                {linkedFocuses.map((focus) => (
+                  <div className="grid gap-2 rounded-control bg-surface-muted p-3" key={focus.id}>
+                    <Link className="flex items-center justify-between gap-3 hover:text-action" href={`/focuses/${focus.id}`}>
+                      <span className="text-sm font-medium text-text-primary">{focus.name}</span>
+                      <Badge tone={flowStatusTone(focus.status)}>{flowStatusLabel(focus.status)}</Badge>
+                    </Link>
+                    <LinkedFocusMeter status={focus.status} />
+                    <div className="flex justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => void toggleLink(focus)} disabled={linkingFocusId === focus.id}>
+                        Unlink
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-text-subtle">No linked Focuses yet.</p>
+            )}
+
+            {availableFocuses.length > 0 ? (
+              <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+                {availableFocuses.map((candidate) => (
+                  <Button key={candidate.id} variant="ghost" size="sm" onClick={() => void toggleLink(candidate)} disabled={linkingFocusId === candidate.id}>
+                    Link {candidate.name}
                   </Button>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
-
-        {editing ? (
-          <form className="grid gap-4 border-t border-border pt-4" onSubmit={submit}>
-            <Field label="Type">
-              <Select value={type} onChange={(event) => setType(event.target.value as GoalType)} disabled={saving}>
-                {goalTypes.map((nextType) => (
-                  <option key={nextType} value={nextType}>
-                    {nextType}
-                  </option>
                 ))}
-              </Select>
-            </Field>
-
-            <Field label="Description" error={error ?? undefined}>
-              <Textarea value={description} onChange={(event) => setDescription(event.target.value)} disabled={saving} />
-            </Field>
-
-            <Field label="Status override">
-              <Select value={statusOverride} onChange={(event) => setStatusOverride(event.target.value as FocusStatus | '')} disabled={saving}>
-                <option value="">Derived</option>
-                {statuses.map((status) => (
-                  <option key={status} value={status}>
-                    {flowStatusLabel(status)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-
-            <div className="flex flex-wrap gap-3">
-              <Button type="submit" disabled={saving}>
-                {saving ? 'Saving...' : 'Save Goal'}
-              </Button>
-              <Button variant="secondary" onClick={() => setEditing(false)} disabled={saving}>
-                Cancel
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <div className="flex flex-wrap gap-3 border-t border-border pt-4">
-            <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
-              Edit
-            </Button>
-            <Button variant="danger" size="sm" onClick={() => void remove()} disabled={deleting}>
-              {deleting ? 'Deleting...' : 'Delete'}
-            </Button>
+              </div>
+            ) : null}
           </div>
-        )}
 
-        {error && !editing ? <p className="text-sm text-danger">{error}</p> : null}
-      </CardContent>
+          {error ? <p className="text-sm text-danger">{error}</p> : null}
+        </CardContent>
+      ) : null}
     </Card>
   );
+}
+
+function LinkedFocusMeter({ status }: { status: FocusStatus }) {
+  return (
+    <span className="flex h-2 overflow-hidden rounded-full bg-surface ring-1 ring-border" aria-label={`Linked Focus status: ${flowStatusLabel(status)}`}>
+      <span className={linkedFocusMeterClass(status)} style={{ width: '100%' }} />
+    </span>
+  );
+}
+
+function linkedFocusMeterClass(status: FocusStatus) {
+  switch (status) {
+    case 'done':
+      return 'bg-success';
+    case 'active':
+    case 'paused':
+    case 'waiting':
+      return 'bg-info';
+    case 'cancelled':
+      return 'bg-danger';
+    case 'idea':
+    case 'planned':
+      return 'bg-border-strong';
+  }
 }

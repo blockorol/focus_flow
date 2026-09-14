@@ -13,7 +13,10 @@ describe('GoalProgress', () => {
     expect(html).toContain('50%');
     expect(html).toContain('Resolved');
     expect(html).toContain('75%');
+    expect(html).toContain('Done: 2');
+    expect(html).toContain('In progress: 1');
     expect(html).toContain('Cancelled: 1');
+    expect(html).toContain('Goal progress by linked Focus status');
   });
 
   it('renders empty progress copy without linked Focuses', () => {
@@ -22,4 +25,3 @@ describe('GoalProgress', () => {
     expect(html).toContain('No linked Focus progress yet.');
   });
 });
-

@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, ErrorState, Field, Input, LoadingState, Select, Textarea } from '.';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, ErrorState, Field, Input, LoadingState, Modal, Select, Textarea } from '.';
 import { cn } from './styles';
 
 describe('UI foundation', () => {
@@ -62,5 +62,25 @@ describe('UI foundation', () => {
     expect(html).toContain('No flows yet');
     expect(html).toContain('Could not save');
     expect(html).toContain('Loading');
+  });
+
+  it('renders modal content only when open', () => {
+    const closed = renderToStaticMarkup(
+      <Modal open={false} title="Create Flow" onClose={() => undefined}>
+        Hidden form
+      </Modal>,
+    );
+    const open = renderToStaticMarkup(
+      <Modal open title="Create Flow" description="Start from one root Focus." onClose={() => undefined} actions={<Button form="create-flow-form">Save</Button>}>
+        Visible form
+      </Modal>,
+    );
+
+    expect(closed).toBe('');
+    expect(open).toContain('role="dialog"');
+    expect(open).toContain('Create Flow');
+    expect(open).toContain('Start from one root Focus.');
+    expect(open).toContain('Save');
+    expect(open).toContain('Visible form');
   });
 });
